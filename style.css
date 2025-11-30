@@ -1,0 +1,261 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  /* Tune this to change how wide the open sidebar is */
+  --sidebar-open-width: 15vw;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  background: #0b1020;
+  color: #f5f5f7;
+}
+
+body {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+#app {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  display: flex;
+  flex-direction: row;
+}
+
+/* Sidebar layout */
+.sidebar {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: radial-gradient(circle at 0% 0%, #020617, #020617 40%, #020617);
+  border-right: 1px solid rgba(148, 163, 184, 0.4);
+  box-shadow: 10px 0 30px rgba(15, 23, 42, 0.8);
+  transition: width 0.25s ease, box-shadow 0.25s ease;
+  overflow: hidden;
+}
+
+.sidebar-open {
+  width: var(--sidebar-open-width);
+  min-width: 220px;
+  max-width: 420px;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.6rem 0.6rem 0.4rem;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.9);
+}
+
+.sidebar-title {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #e5e7eb;
+  white-space: nowrap;
+}
+
+.sidebar-body {
+  padding: 0.75rem 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.sidebar-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sidebar-body label {
+  font-size: 1rem;
+  color: #e5e7eb;
+  white-space: nowrap;
+}
+
+/* Keep the dropdown native; only ensure it uses the remaining width */
+#map-select {
+  font-size: 1rem;
+  flex: 1;
+}
+
+.pin-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.pin-button,
+.route-button {
+  font-size: 0.9rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 0.4rem;
+  border: 1px solid rgba(148, 163, 184, 0.9);
+  background: #020617;
+  color: #e5e7eb;
+  cursor: pointer;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  aspect-ratio: 1 / 1;
+  text-align: center;
+}
+
+.pin-button.pin-button-active,
+.route-button.route-button-active {
+  background: rgba(30, 64, 175, 0.95);
+  border-color: rgba(129, 140, 248, 1);
+}
+
+#map {
+  flex: 1;
+  border-radius: 0;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  background: #000;
+}
+
+/* Custom zoom control */
+.leaflet-control-zoom,
+.custom-zoom-control {
+  border-radius: 0.9rem;
+  overflow: hidden;
+}
+
+.leaflet-bar a,
+.leaflet-bar a:hover {
+  background-color: rgba(15, 23, 42, 0.96);
+  color: #e5e7eb;
+  border-color: rgba(51, 65, 85, 0.8);
+}
+
+.leaflet-bar a:hover {
+  background-color: rgba(30, 64, 175, 0.95);
+}
+
+/* Increase icon sizes on zoom and fit-to-screen buttons */
+.custom-zoom-control a {
+  width: 2.6rem;
+  height: 2.6rem;
+  line-height: 2.6rem;
+  font-size: 1.4rem;
+}
+
+/* Pin icons for special marker types */
+.pin-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border-width: 2px;
+  border-style: solid;
+  background: #020617;
+  color: #e5e7eb;
+  font-size: 0.8rem;
+  font-weight: 600;
+  box-shadow: 0 0 10px rgba(15, 23, 42, 0.9);
+}
+
+.pin-icon-spawn {
+  border-color: #22c55e;
+  color: #bbf7d0;
+}
+
+.pin-icon-extract {
+  border-color: #eab308;
+  color: #fef9c3;
+}
+
+.pin-button-label,
+.route-button-label {
+  font-size: 0.9rem;
+  margin-bottom: 0.4rem;
+}
+
+.pin-button-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pin-icon-custom {
+  border-color: #38bdf8;
+  color: #e0f2fe;
+}
+
+.marker-legend-custom {
+  width: 22px;
+  height: 36px;
+  background-image: url("https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.route-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #fbbf24;
+  border: 2px solid #facc15;
+}
+}
+
+/* Context menu for markers and routes */
+.context-menu {
+  position: absolute;
+  min-width: 160px;
+  background: #020617;
+  border: 1px solid rgba(30, 64, 175, 0.9);
+  border-radius: 0.35rem;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.95);
+  padding: 0.25rem 0;
+  z-index: 2000;
+}
+
+.context-menu-item {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: #e5e7eb;
+  text-align: left;
+  font-size: 0.9rem;
+  padding: 0.4rem 0.75rem;
+  cursor: pointer;
+}
+
+.context-menu-item:hover {
+  background: rgba(30, 64, 175, 0.9);
+}
+
+@media (max-width: 768px) {
+  .sidebar-open {
+    width: max(55vw, 200px);
+  }
+}
+

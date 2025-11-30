@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ArcMaps Viewer</title>
+
+    <!-- Leaflet CSS from CDN -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <aside id="sidebar" class="sidebar sidebar-open">
+        <div class="sidebar-body">
+          <div class="sidebar-row">
+            <label for="map-select">Map:</label>
+            <select id="map-select"></select>
+          </div>
+          <div class="pin-buttons">
+            <button
+              type="button"
+              class="pin-button"
+              data-pin-type="custom"
+            >
+              <span class="pin-button-label">Custom Marker</span>
+              <span class="pin-button-icon">
+                <span class="marker-legend-custom"></span>
+              </span>
+            </button>
+            <button
+              type="button"
+              class="pin-button"
+              data-pin-type="spawn"
+            >
+              <span class="pin-button-label">Player Spawn</span>
+              <span class="pin-button-icon">
+                <span class="pin-icon pin-icon-spawn">S</span>
+              </span>
+            </button>
+            <button
+              type="button"
+              class="pin-button"
+              data-pin-type="extract"
+            >
+              <span class="pin-button-label">Extract</span>
+              <span class="pin-button-icon">
+                <span class="pin-icon pin-icon-extract">E</span>
+              </span>
+            </button>
+            <button
+              type="button"
+              id="route-button"
+              class="route-button"
+            >
+              <span class="route-button-label">Draw Route</span>
+              <span class="pin-button-icon">
+                <span class="route-dot"></span>
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <div id="map"></div>
+    </div>
+
+    <div id="context-menu" class="context-menu" hidden>
+      <button
+        type="button"
+        class="context-menu-item"
+        data-action="delete-marker"
+      >
+        Delete Marker
+      </button>
+      <button
+        type="button"
+        class="context-menu-item"
+        data-action="delete-route"
+      >
+        Delete Route
+      </button>
+    </div>
+
+    <!-- Leaflet JS from CDN -->
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <script src="main.js"></script>
+  </body>
+  </html>
+
+
