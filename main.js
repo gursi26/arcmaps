@@ -9,6 +9,7 @@ const mapList = [
 const mapSelect = document.getElementById('map-select');
 const sidebar = document.querySelector('.sidebar');
 const toggleButton = document.querySelector('.sidebar__toggle');
+const toggleIcon = document.querySelector('.sidebar__toggle-icon');
 let leafletMap;
 let currentOverlay;
 
@@ -66,6 +67,10 @@ function loadImageOverlay(mapId) {
     currentOverlay = L.imageOverlay(mapConfig.file, bounds).addTo(leafletMap);
     leafletMap.setMaxBounds(bounds);
     leafletMap.fitBounds(bounds);
+    leafletMap.invalidateSize(true);
+  };
+  img.onerror = () => {
+    console.error(`Failed to load map image for ${mapId}`);
   };
 }
 
@@ -79,7 +84,11 @@ function attachListeners() {
   toggleButton.addEventListener('click', () => {
     const isCollapsed = sidebar.classList.toggle('sidebar--collapsed');
     toggleButton.setAttribute('aria-expanded', (!isCollapsed).toString());
-    toggleButton.textContent = isCollapsed ? 'Show panel' : 'Hide panel';
+    toggleButton.setAttribute(
+      'aria-label',
+      isCollapsed ? 'Show controls panel' : 'Hide controls panel',
+    );
+    toggleIcon.textContent = isCollapsed ? '▶' : '◀';
     setTimeout(() => {
       if (leafletMap) {
         leafletMap.invalidateSize();

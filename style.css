@@ -32,6 +32,7 @@ body {
   border-right: 1px solid #1e293b;
   transition: width 200ms ease, transform 200ms ease;
   overflow: hidden;
+  position: relative;
 }
 
 .sidebar__header {
@@ -47,16 +48,28 @@ body {
 }
 
 .sidebar__toggle {
+  position: absolute;
+  top: 12px;
+  right: -18px;
   border: 1px solid #334155;
   background: #1e293b;
   color: #e2e8f0;
-  padding: 6px 10px;
-  border-radius: 6px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
   cursor: pointer;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
 .sidebar__toggle:hover {
   background: #2b3a55;
+}
+
+.sidebar__toggle-icon {
+  display: inline-block;
+  transition: transform 150ms ease;
 }
 
 .sidebar__content {
@@ -99,6 +112,7 @@ select:focus {
 
 .map-container {
   position: relative;
+  height: 100vh;
 }
 
 .map {
@@ -117,7 +131,11 @@ select:focus {
 }
 
 .sidebar--collapsed .sidebar__toggle {
-  width: 100%;
+  right: -12px;
+}
+
+.sidebar--collapsed .sidebar__toggle-icon {
+  transform: rotate(180deg);
 }
 
 @media (max-width: 900px) {
@@ -144,7 +162,7 @@ select:focus {
   }
 
   .sidebar--collapsed {
-    transform: translateX(-260px);
+    transform: translateX(-208px);
   }
 
   .map {

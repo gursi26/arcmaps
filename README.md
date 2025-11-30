@@ -4,11 +4,12 @@ Static map viewer prototype that displays local PNG map assets with pan/zoom con
 
 ## Getting started
 
-Open `index.html` directly in your browser or serve the project from the repository root with any static file server. Examples:
+Install dependencies (for local testing scripts) and serve the project from the repository root, or simply open `index.html` directly in your browser. Examples:
 
 ```bash
-npx serve .
-# or
+npm install
+npm start
+# or use any static file server
 python -m http.server 8000
 ```
 
