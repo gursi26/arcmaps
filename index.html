@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ArcMaps Viewer</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-o9N1j7kGStpPrpsE0JWN9bP16bO2p3p3p4ReocJw6+o="
+      crossorigin=""
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar" aria-label="Map controls">
+        <div class="sidebar__header">
+          <h1 class="sidebar__title">ArcMaps</h1>
+          <button class="sidebar__toggle" type="button" aria-expanded="true">
+            Hide panel
+          </button>
+        </div>
+        <div class="sidebar__content">
+          <label class="input-group">
+            <span class="input-group__label">Select map</span>
+            <select id="map-select" name="map" aria-label="Select map"></select>
+          </label>
+          <p class="sidebar__hint">
+            Use scroll to zoom and drag to pan. Selection is preserved in the URL so you can
+            bookmark or share the current map.
+          </p>
+        </div>
+      </aside>
+      <main class="map-container" aria-label="Map canvas">
+        <div id="map" class="map" role="presentation"></div>
+      </main>
+    </div>
+
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-vuV8Lkoj8VD15xX1G5GkS1P8UigSIqi+HCUot28B+3s="
+      crossorigin=""
+    ></script>
+    <script src="main.js"></script>
+  </body>
+</html>
