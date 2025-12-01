@@ -1,4 +1,5 @@
 import { removeMarker, removeMarkersByType, undoLastMarker } from "./state.js";
+import { undoLastFixedMarker, downloadFixedMarkers, clearFixedState, renderFixedMarkers } from "./fixedMarkers.js";
 
 let contextMenuState = null;
 
@@ -43,8 +44,14 @@ export function showContextMenu(contextMenuEl, type, clientX, clientY, payload =
 }
 
 // Setup context menu event handlers
-export function setupContextMenu(contextMenuEl) {
+export function setupContextMenu(contextMenuEl, adminMode = false) {
   if (!contextMenuEl) return;
+  
+  // In admin mode, disable context menu entirely
+  if (adminMode) {
+    contextMenuEl.style.display = "none";
+    return;
+  }
 
   const deleteMarkerBtn = contextMenuEl.querySelector('[data-action="delete-marker"]');
   const deleteRouteBtn = contextMenuEl.querySelector('[data-action="delete-route"]');
@@ -81,12 +88,16 @@ export function setupContextMenu(contextMenuEl) {
 }
 
 // Setup undo keyboard shortcut
-export function setupUndoHandler() {
+export function setupUndoHandler(adminMode = false) {
   document.addEventListener("keydown", (e) => {
     const isUndoKey = (e.key === "z" || e.key === "Z") && (e.ctrlKey || e.metaKey);
     if (!isUndoKey) return;
     e.preventDefault();
-    undoLastMarker();
+    if (adminMode) {
+      undoLastFixedMarker();
+    } else {
+      undoLastMarker();
+    }
   });
 }
 
@@ -180,5 +191,36 @@ export function setupShareButton(shareButton, getStateCallback, getMapId) {
       console.error("Failed to build or copy share URL", err);
     }
   });
+}
+
+// Setup admin controls
+export function setupAdminControls(adminControlsEl, getMapId) {
+  if (!adminControlsEl) return;
+
+  const saveBtn = adminControlsEl.querySelector('[data-action="save-fixed"]');
+  const clearBtn = adminControlsEl.querySelector('[data-action="clear-fixed"]');
+
+  if (saveBtn) {
+    saveBtn.addEventListener("click", () => {
+      const mapId = getMapId();
+      downloadFixedMarkers(mapId);
+      
+      // Show feedback
+      const originalText = saveBtn.textContent;
+      saveBtn.textContent = "Saved! ✓";
+      setTimeout(() => {
+        saveBtn.textContent = originalText;
+      }, 2000);
+    });
+  }
+
+  if (clearBtn) {
+    clearBtn.addEventListener("click", () => {
+      if (confirm("Clear all fixed markers for this map?")) {
+        clearFixedState();
+        renderFixedMarkers();
+      }
+    });
+  }
 }
 

@@ -54,26 +54,25 @@ body {
 }
 
 .sidebar-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.6rem 0.6rem 0.6rem 0.4rem;
+  padding: 0.75rem 0.75rem 0.75rem;
   border-bottom: 1px solid rgba(51, 65, 85, 0.9);
-}
-
-.sidebar-title {
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: #e5e7eb;
-  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .sidebar-body {
-  padding: 0.75rem 0.75rem 1rem;
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  justify-content: center;
+  padding: 1rem 0.75rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.sidebar-footer {
+  padding: 0.75rem;
+  border-top: 1px solid rgba(51, 65, 85, 0.9);
+  flex-shrink: 0;
 }
 
 .sidebar-row {
@@ -95,14 +94,72 @@ body {
   flex: 1;
 }
 
+.button-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.button-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+#admin-section {
+  display: none;
+}
+
+.section-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #94a3b8;
+  font-weight: 600;
+  margin: 0 0 0.25rem 0;
+  padding: 0;
+}
+
 .pin-buttons {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.5rem;
 }
 
+.legend-controls {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.legend-control-btn {
+  flex: 1;
+  font-size: 0.75rem;
+  padding: 0.3rem 0.5rem;
+  border-radius: 0.3rem;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  background: #0f172a;
+  color: #cbd5e1;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.legend-control-btn:hover {
+  background: #1e293b;
+  border-color: rgba(148, 163, 184, 0.9);
+  color: #e5e7eb;
+}
+
+.legend-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
 .pin-button,
-.route-button {
+.route-button,
+.legend-button {
   font-size: 0.9rem;
   padding: 0.45rem 0.75rem;
   border-radius: 0.4rem;
@@ -117,12 +174,26 @@ body {
   align-items: center;
   aspect-ratio: 1 / 1;
   text-align: center;
+  transition: opacity 0.2s ease, background 0.2s ease;
 }
 
 .pin-button.pin-button-active,
 .route-button.route-button-active {
   background: rgba(30, 64, 175, 0.95);
   border-color: rgba(129, 140, 248, 1);
+}
+
+.legend-button {
+  opacity: 1;
+}
+
+.legend-button:not(.legend-button-active) {
+  opacity: 0.3;
+  background: #0f172a;
+}
+
+.legend-button:hover {
+  opacity: 1;
 }
 
 #map {
@@ -186,15 +257,41 @@ body {
   color: #bbf7d0;
 }
 
-.pin-icon-extract {
+.pin-icon-metro-entrance {
   border-color: #eab308;
   color: #fef9c3;
 }
 
+.pin-icon-security-breach {
+  border-color: #ef4444;
+  color: #fecaca;
+}
+
+.pin-icon-weapon-case {
+  border-color: #f97316;
+  color: #fed7aa;
+}
+
+.pin-icon-metro {
+  border-color: #8b5cf6;
+  color: #ddd6fe;
+}
+
+.pin-icon-elevator {
+  border-color: #06b6d4;
+  color: #cffafe;
+}
+
+.pin-icon-raider-hatch {
+  border-color: #dc2626;
+  color: #fca5a5;
+}
+
 .pin-button-label,
 .route-button-label {
-  font-size: 0.9rem;
-  margin-bottom: 0.4rem;
+  font-size: 0.75rem;
+  margin-bottom: 0.3rem;
+  line-height: 1.2;
 }
 
 .pin-button-icon {
@@ -226,11 +323,9 @@ body {
 }
 
 .share-button {
-  margin-top: 0.75rem;
   width: 100%;
   font-size: 0.9rem;
   padding: 0.5rem 0.75rem;
-   /* Fix height so label changes don't resize button */
   min-height: 2.4rem;
   border-radius: 0.4rem;
   border: 1px solid rgba(148, 163, 184, 0.9);
@@ -246,6 +341,51 @@ body {
 .share-button:hover {
   background: rgba(30, 64, 175, 0.9);
   border-color: rgba(129, 140, 248, 1);
+}
+
+/* Admin controls */
+.admin-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.admin-button {
+  width: 100%;
+  font-size: 0.9rem;
+  padding: 0.5rem 0.75rem;
+  min-height: 2.4rem;
+  border-radius: 0.4rem;
+  border: 1px solid rgba(148, 163, 184, 0.9);
+  background: #1e3a8a;
+  color: #e5e7eb;
+  cursor: pointer;
+  text-align: center;
+}
+
+.admin-button:hover {
+  background: #1e40af;
+  border-color: rgba(129, 140, 248, 1);
+}
+
+.admin-button-danger {
+  background: #7f1d1d;
+  border-color: #991b1b;
+}
+
+.admin-button-danger:hover {
+  background: #991b1b;
+  border-color: #dc2626;
+}
+
+.admin-info {
+  font-size: 0.75rem;
+  color: #fbbf24;
+  text-align: center;
+  padding: 0.5rem;
+  background: rgba(251, 191, 36, 0.1);
+  border-radius: 0.4rem;
+  border: 1px solid rgba(251, 191, 36, 0.3);
 }
 
 /* Context menu for markers and routes */

@@ -30,7 +30,7 @@ export function clearState() {
 }
 
 // Render all markers from state array
-export function renderState() {
+export function renderState(onMarkerClick = null) {
   if (!markersLayer || !routeLayer) return;
 
   markersLayer.clearLayers();
@@ -68,6 +68,13 @@ export function renderState() {
       }).addTo(markersLayer);
       marker.stateIndex = idx;
       marker.markerType = "route";
+      
+      if (onMarkerClick) {
+        marker.on("click", (e) => {
+          L.DomEvent.stopPropagation(e);
+          onMarkerClick(marker, e);
+        });
+      }
     } else {
       // Regular pin marker
       const icon = PIN_ICONS[markerType] || undefined;
@@ -75,6 +82,13 @@ export function renderState() {
       const marker = L.marker(latlng, markerOptions).addTo(markersLayer);
       marker.stateIndex = idx;
       marker.markerType = markerType;
+      
+      if (onMarkerClick) {
+        marker.on("click", (e) => {
+          L.DomEvent.stopPropagation(e);
+          onMarkerClick(marker, e);
+        });
+      }
     }
   });
 
@@ -86,14 +100,14 @@ export function addMarker(latlng, markerType) {
   const typeId = MARKER_TYPES[markerType];
   if (typeId === undefined) return;
   state.push([typeId, roundCoord(latlng.lat), roundCoord(latlng.lng)]);
-  renderState();
+  renderState(window._markerClickHandler);
 }
 
 // Remove marker at specific index
 export function removeMarker(index) {
   if (index >= 0 && index < state.length) {
     state.splice(index, 1);
-    renderState();
+    renderState(window._markerClickHandler);
   }
 }
 
@@ -102,14 +116,14 @@ export function removeMarkersByType(markerType) {
   const typeId = MARKER_TYPES[markerType];
   if (typeId === undefined) return;
   state = state.filter(([id]) => id !== typeId);
-  renderState();
+  renderState(window._markerClickHandler);
 }
 
 // Undo last marker
 export function undoLastMarker() {
   if (state.length > 0) {
     state.pop();
-    renderState();
+    renderState(window._markerClickHandler);
   }
 }
 
