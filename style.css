@@ -224,6 +224,28 @@ body {
   background-color: #fbbf24;
   border: 2px solid #facc15;
 }
+
+.share-button {
+  margin-top: 0.75rem;
+  width: 100%;
+  font-size: 0.9rem;
+  padding: 0.5rem 0.75rem;
+   /* Fix height so label changes don't resize button */
+  min-height: 2.4rem;
+  border-radius: 0.4rem;
+  border: 1px solid rgba(148, 163, 184, 0.9);
+  background: #0b1120;
+  color: #e5e7eb;
+  cursor: pointer;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.share-button:hover {
+  background: rgba(30, 64, 175, 0.9);
+  border-color: rgba(129, 140, 248, 1);
 }
 
 /* Context menu for markers and routes */
