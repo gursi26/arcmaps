@@ -8,19 +8,66 @@ const MAPS = [
   { id: "blue-gate", label: "Blue Gate", file: "maps/blue-gate.png" },
 ];
 
-// Decode compact state from ?state= query param (base64url-encoded JSON).
-function decodeStateFromUrl() {
+// --- State encoding / decoding helpers ---
+
+const PIN_TYPE_CODES = {
+  custom: 0,
+  spawn: 1,
+  extract: 2,
+};
+
+const PIN_TYPES_BY_CODE = ["custom", "spawn", "extract"];
+
+const roundCoord = (value) => Math.round(value * 100) / 100;
+
+function base64UrlEncode(bytes) {
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += 1) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  const base64 = btoa(binary);
+  return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+function base64UrlDecodeToBytes(encoded) {
+  let base64 = encoded.replace(/-/g, "+").replace(/_/g, "/");
+  while (base64.length % 4) {
+    base64 += "=";
+  }
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+}
+
+// Decode compact state from ?state= query param (gzipped+base64url JSON, or plain base64url JSON for older links).
+async function decodeStateFromUrl() {
   try {
     const params = new URLSearchParams(window.location.search);
     const encoded = params.get("state");
     if (!encoded) return null;
 
-    let base64 = encoded.replace(/-/g, "+").replace(/_/g, "/");
-    while (base64.length % 4) {
-      base64 += "=";
+    const bytes = base64UrlDecodeToBytes(encoded);
+    let json;
+
+    if (window.DecompressionStream) {
+      try {
+        const ds = new DecompressionStream("gzip");
+        const writer = ds.writable.getWriter();
+        writer.write(bytes);
+        writer.close();
+        const decompressed = await new Response(ds.readable).arrayBuffer();
+        json = new TextDecoder().decode(decompressed);
+      } catch (err) {
+        // Not gzipped or failed to decompress → treat as plain UTF-8 JSON
+        json = new TextDecoder().decode(bytes);
+      }
+    } else {
+      json = new TextDecoder().decode(bytes);
     }
 
-    const json = atob(base64);
     const obj = JSON.parse(json);
     if (!obj || typeof obj !== "object") return null;
     return obj;
@@ -138,19 +185,16 @@ function loadMap(mapEntry) {
 async function init() {
   if (!MAPS.length) return;
 
-  // Try to restore state from ?state= first; fall back to ?map= or default.
-  const urlState = decodeStateFromUrl();
-  let initialMap = null;
+  // Try to restore state from ?state=. Map id comes from ?map= (or legacy state.m).
+  const urlState = await decodeStateFromUrl();
+  const params = new URLSearchParams(window.location.search);
+  const urlMapIdFromParam = params.get("map");
+  const urlMapIdFromState =
+    urlState && typeof urlState.m === "string" ? urlState.m : null;
 
-  if (urlState && typeof urlState.m === "string") {
-    initialMap = MAPS.find((m) => m.id === urlState.m) ?? null;
-  }
-
-  if (!initialMap) {
-    const params = new URLSearchParams(window.location.search);
-    const urlMapId = params.get("map");
-    initialMap = MAPS.find((m) => m.id === urlMapId) ?? MAPS[0];
-  }
+  const selectedMapId = urlMapIdFromParam || urlMapIdFromState;
+  const initialMap =
+    (selectedMapId && MAPS.find((m) => m.id === selectedMapId)) ?? MAPS[0];
 
   mapSelectEl.value = initialMap.id;
 
@@ -372,21 +416,23 @@ async function init() {
   }
 
   // If there is encoded state in the URL and it targets this map, apply it
-  if (urlState && urlState.m === initialMap.id) {
+  if (urlState) {
     // Restore markers
     if (Array.isArray(urlState.p)) {
       for (const entry of urlState.p) {
         if (!Array.isArray(entry) || entry.length !== 3) {
           continue;
         }
-        const [type, lat, lng] = entry;
+        const [code, lat, lng] = entry;
         if (
-          (type !== "custom" && type !== "spawn" && type !== "extract") ||
+          typeof code !== "number" ||
           typeof lat !== "number" ||
           typeof lng !== "number"
         ) {
           continue;
         }
+        const type = PIN_TYPES_BY_CODE[code];
+        if (!type) continue;
         createPin(L.latLng(lat, lng), type);
       }
     }
@@ -404,15 +450,7 @@ async function init() {
 
   // Share Map URL
   if (shareButtonEl) {
-    const encodeState = (stateObj) => {
-      const json = JSON.stringify(stateObj);
-      const base64 = btoa(json);
-      return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
-    };
-
     const buildCurrentState = () => {
-      const m = mapSelectEl.value;
-
       // Serialize pins
       const p = [];
       pinsLayer.getLayers().forEach((marker) => {
@@ -426,13 +464,18 @@ async function init() {
         ) {
           return;
         }
-        p.push([type, latlng.lat, latlng.lng]);
+        const code = PIN_TYPE_CODES[type];
+        if (code === undefined) return;
+        p.push([code, roundCoord(latlng.lat), roundCoord(latlng.lng)]);
       });
 
       // Serialize route
-      const r = routeNodes.map((n) => [n.latlng.lat, n.latlng.lng]);
+      const r = routeNodes.map((n) => [
+        roundCoord(n.latlng.lat),
+        roundCoord(n.latlng.lng),
+      ]);
 
-      return { m, p, r };
+      return { p, r };
     };
 
     const originalShareText = shareButtonEl.textContent.trim() || "Share Map URL";
@@ -448,13 +491,36 @@ async function init() {
       }, 3000);
     };
 
+    const encodeStateToFragment = async (stateObj) => {
+      const json = JSON.stringify(stateObj);
+      const encoder = new TextEncoder();
+      const inputBytes = encoder.encode(json);
+      let bytes = inputBytes;
+
+      if (window.CompressionStream) {
+        try {
+          const cs = new CompressionStream("gzip");
+          const writer = cs.writable.getWriter();
+          writer.write(inputBytes);
+          writer.close();
+          const compressed = await new Response(cs.readable).arrayBuffer();
+          bytes = new Uint8Array(compressed);
+        } catch (err) {
+          // fall back to uncompressed
+          bytes = inputBytes;
+        }
+      }
+
+      return base64UrlEncode(bytes);
+    };
+
     shareButtonEl.addEventListener("click", async () => {
       try {
         const state = buildCurrentState();
-        const encoded = encodeState(state);
+        const encoded = await encodeStateToFragment(state);
         const url = new URL(window.location.href);
         url.searchParams.set("state", encoded);
-        url.searchParams.set("map", state.m);
+        url.searchParams.set("map", mapSelectEl.value);
 
         const urlStr = url.toString();
 
