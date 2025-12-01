@@ -33,7 +33,7 @@ import {
 } from "./fixedMarkers.js";
 
 // ADMIN MODE TOGGLE - Set to false before deploying to production
-const ALLOW_ADMIN_MODE = true;
+const ALLOW_ADMIN_MODE = false;
 
 // Check if admin mode is enabled
 function isAdminMode() {
