@@ -8,6 +8,16 @@ let state = [];
 let markersLayer = null;
 let routeLayer = null;
 
+// Visibility state for user-drawn marker types
+const visibilityState = {
+  custom: true,
+  custom1: true,
+  custom2: true,
+  route: true,
+  route1: true,
+  route2: true,
+};
+
 // Initialize with Leaflet layers
 export function initState(markersLayerGroup, routeLayerGroup) {
   markersLayer = markersLayerGroup;
@@ -29,6 +39,20 @@ export function clearState() {
   state = [];
 }
 
+// Toggle visibility for a marker type
+export function toggleMarkerVisibility(markerType) {
+  if (visibilityState.hasOwnProperty(markerType)) {
+    visibilityState[markerType] = !visibilityState[markerType];
+    return visibilityState[markerType];
+  }
+  return true;
+}
+
+// Check if a marker type is visible
+export function isMarkerVisible(markerType) {
+  return visibilityState[markerType] !== false;
+}
+
 // Render all markers from state array
 export function renderState(onMarkerClick = null) {
   if (!markersLayer || !routeLayer) return;
@@ -45,6 +69,9 @@ export function renderState(onMarkerClick = null) {
 
   // Filter and draw route nodes for each route type
   ["route", "route1", "route2"].forEach(routeType => {
+    // Only render if this route type is visible
+    if (!isMarkerVisible(routeType)) return;
+    
     const routeNodes = state
       .filter(([typeId]) => typeId === MARKER_TYPES[routeType])
       .map(([, lat, lng]) => L.latLng(lat, lng));
@@ -65,6 +92,9 @@ export function renderState(onMarkerClick = null) {
   state.forEach(([typeId, lat, lng], idx) => {
     const latlng = L.latLng(lat, lng);
     const markerType = MARKER_TYPES_BY_ID[typeId];
+    
+    // Skip if this marker type is hidden
+    if (!isMarkerVisible(markerType)) return;
 
     if (typeId === MARKER_TYPES.route || typeId === MARKER_TYPES.route1 || typeId === MARKER_TYPES.route2) {
       // Route node - get colors based on route type
