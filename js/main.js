@@ -10,6 +10,8 @@ import {
   clearState,
   toggleMarkerVisibility,
   isMarkerVisible,
+  setMarkerNote,
+  getMarkerNote,
 } from "./state.js";
 import {
   createLeafletMap,
@@ -39,6 +41,7 @@ import {
   saveRoute,
   deleteRoute,
   getRoute,
+  updateRoute,
 } from "./savedRoutes.js";
 
 // TODO - populate fixed markers for all maps
@@ -93,44 +96,213 @@ async function init() {
   const emptyRoutesMessage = document.getElementById("empty-routes-message");
   const mainFooter = document.getElementById("main-footer");
   const savedRoutesFooter = document.getElementById("saved-routes-footer");
-  const deleteModal = document.getElementById("delete-modal");
+  const confirmModal = document.getElementById("confirm-modal");
+  const modalTitle = document.getElementById("modal-title");
+  const modalMessage = document.getElementById("modal-message");
   const modalCancel = document.getElementById("modal-cancel");
   const modalConfirm = document.getElementById("modal-confirm");
+  const noteInputPopup = document.getElementById("note-input-popup");
+  const noteInputField = document.getElementById("note-input-field");
+  const autosaveIndicator = document.getElementById("autosave-indicator");
 
-  // Delete modal functionality
-  let pendingDeleteRouteId = null;
-  let onDeleteConfirm = null;
+  // Track currently loaded saved route (null = new unsaved map)
+  let currentSavedRouteId = null;
+  let autosaveTimeout = null;
+  const noteConfirmButton = document.getElementById("note-confirm-button");
 
-  const showDeleteModal = (routeId, onConfirm) => {
-    pendingDeleteRouteId = routeId;
-    onDeleteConfirm = onConfirm;
-    if (deleteModal) deleteModal.style.display = "flex";
+  // Confirmation modal functionality
+  let modalOnConfirm = null;
+
+  const showConfirmModal = (title, message, confirmText, onConfirm) => {
+    if (modalTitle) modalTitle.textContent = title;
+    if (modalMessage) modalMessage.textContent = message;
+    if (modalConfirm) modalConfirm.textContent = confirmText;
+    modalOnConfirm = onConfirm;
+    if (confirmModal) confirmModal.style.display = "flex";
   };
 
-  const hideDeleteModal = () => {
-    pendingDeleteRouteId = null;
-    onDeleteConfirm = null;
-    if (deleteModal) deleteModal.style.display = "none";
+  const hideConfirmModal = () => {
+    modalOnConfirm = null;
+    if (confirmModal) confirmModal.style.display = "none";
   };
 
   if (modalCancel) {
-    modalCancel.addEventListener("click", hideDeleteModal);
+    modalCancel.addEventListener("click", hideConfirmModal);
   }
 
   if (modalConfirm) {
     modalConfirm.addEventListener("click", () => {
-      if (pendingDeleteRouteId && onDeleteConfirm) {
-        deleteRoute(pendingDeleteRouteId);
-        onDeleteConfirm();
+      if (modalOnConfirm) {
+        modalOnConfirm();
       }
-      hideDeleteModal();
+      hideConfirmModal();
     });
   }
 
   // Close modal when clicking overlay
-  if (deleteModal) {
-    deleteModal.querySelector(".modal-overlay")?.addEventListener("click", hideDeleteModal);
+  if (confirmModal) {
+    confirmModal.querySelector(".modal-overlay")?.addEventListener("click", hideConfirmModal);
   }
+
+  // Autosave functionality for saved maps
+  const showAutosaveIndicator = (state) => {
+    // Don't show indicator if we're not editing a saved map
+    if (!autosaveIndicator || !currentSavedRouteId) return;
+    autosaveIndicator.style.display = "flex";
+    autosaveIndicator.classList.remove("saving", "saved");
+    if (state === "saving") {
+      autosaveIndicator.classList.add("saving");
+    } else if (state === "saved") {
+      autosaveIndicator.classList.add("saved");
+    }
+  };
+
+  const hideAutosaveIndicator = () => {
+    // Clear any pending autosave timeout
+    if (autosaveTimeout) {
+      clearTimeout(autosaveTimeout);
+      autosaveTimeout = null;
+    }
+    if (autosaveIndicator) {
+      autosaveIndicator.style.display = "none";
+      autosaveIndicator.classList.remove("saving", "saved");
+    }
+  };
+
+  const triggerAutosave = async () => {
+    if (!currentSavedRouteId) return;
+    
+    // Clear any pending autosave
+    if (autosaveTimeout) {
+      clearTimeout(autosaveTimeout);
+    }
+    
+    // Debounce autosave by 500ms
+    autosaveTimeout = setTimeout(async () => {
+      showAutosaveIndicator("saving");
+      
+      try {
+        const routeName = routeNameInput?.value || "Unnamed map";
+        const currentMapId = mapSelectEl.value;
+        const stateString = await encodeStateToUrl(getState());
+        
+        updateRoute(currentSavedRouteId, {
+          name: routeName,
+          mapId: currentMapId,
+          state: stateString,
+        });
+        
+        showAutosaveIndicator("saved");
+        
+        // Hide indicator after 2 seconds
+        setTimeout(() => {
+          showAutosaveIndicator("saved"); // Keep showing saved state
+        }, 2000);
+      } catch (err) {
+        console.error("Autosave failed:", err);
+        hideAutosaveIndicator();
+      }
+    }, 500);
+  };
+
+  // Update UI based on whether we're editing a saved map or a new map
+  const updateSaveButtonVisibility = () => {
+    if (saveRouteButton) {
+      saveRouteButton.style.display = currentSavedRouteId ? "none" : "block";
+    }
+    if (autosaveIndicator) {
+      // Only show autosave indicator when editing a saved map
+      if (!currentSavedRouteId) {
+        hideAutosaveIndicator();
+      }
+    }
+  };
+
+  // Note input popup functionality
+  let currentNoteMarkerIndex = null;
+
+  const showNoteInput = (markerIndex, clientX, clientY) => {
+    if (!noteInputPopup || !noteInputField) return;
+    
+    currentNoteMarkerIndex = markerIndex;
+    
+    // Get existing note if any
+    const existingNote = getMarkerNote(markerIndex);
+    noteInputField.value = existingNote || "";
+    
+    // Position popup
+    const padding = 8;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    let x = clientX;
+    let y = clientY;
+    
+    noteInputPopup.style.display = "flex";
+    const popupRect = noteInputPopup.getBoundingClientRect();
+    
+    if (x + popupRect.width > vw - padding) x = vw - popupRect.width - padding;
+    if (y + popupRect.height > vh - padding) y = vh - popupRect.height - padding;
+    
+    noteInputPopup.style.left = `${x}px`;
+    noteInputPopup.style.top = `${y}px`;
+    
+    // Focus input
+    setTimeout(() => noteInputField.focus(), 0);
+  };
+
+  const hideNoteInput = () => {
+    if (noteInputPopup) {
+      noteInputPopup.style.display = "none";
+      currentNoteMarkerIndex = null;
+      if (noteInputField) noteInputField.value = "";
+    }
+  };
+
+  const saveNote = () => {
+    if (currentNoteMarkerIndex !== null && noteInputField) {
+      const noteText = noteInputField.value.trim();
+      setMarkerNote(currentNoteMarkerIndex, noteText);
+    }
+    hideNoteInput();
+  };
+
+  // Note confirm button
+  if (noteConfirmButton) {
+    noteConfirmButton.addEventListener("click", saveNote);
+  }
+
+  // Enter key to save note
+  if (noteInputField) {
+    noteInputField.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        saveNote();
+      } else if (e.key === "Escape") {
+        hideNoteInput();
+      }
+    });
+  }
+
+  // Prevent clicks inside popup from closing it
+  if (noteInputPopup) {
+    noteInputPopup.addEventListener("click", (e) => {
+      e.stopPropagation();
+    });
+  }
+
+  // Close note input on outside click
+  document.addEventListener("click", (e) => {
+    if (noteInputPopup && 
+        noteInputPopup.style.display !== "none" && 
+        !noteInputPopup.contains(e.target)) {
+      hideNoteInput();
+    }
+  });
+
+  // Make functions globally accessible
+  window._showNoteInput = showNoteInput;
+  window._getMarkerNote = getMarkerNote;
+  window._triggerAutosave = triggerAutosave;
 
   // Show/hide sections based on mode
   if (adminMode) {
@@ -355,6 +527,12 @@ async function init() {
     if (savedRoutesTitle) savedRoutesTitle.style.display = "block";
     if (mainFooter) mainFooter.style.display = "none";
     if (savedRoutesFooter) savedRoutesFooter.style.display = "block";
+    // Clear saved route context and hide autosave indicator
+    currentSavedRouteId = null;
+    hideAutosaveIndicator();
+    // Clear user-drawn markers visually (state is preserved)
+    markersLayer.clearLayers();
+    routeLayer.clearLayers();
     renderSavedRoutesList();
   };
 
@@ -451,7 +629,15 @@ async function init() {
         btn.addEventListener("click", (e) => {
           e.stopPropagation();
           const routeId = btn.dataset.routeId;
-          showDeleteModal(routeId, renderSavedRoutesList);
+          showConfirmModal(
+            "Delete Map?",
+            "Are you sure you want to delete this map? This action cannot be undone.",
+            "Delete",
+            () => {
+              deleteRoute(routeId);
+              renderSavedRoutesList();
+            }
+          );
         });
       });
   };
@@ -517,7 +703,14 @@ async function init() {
 
       // Set route name and show main view
       if (routeNameInput) routeNameInput.value = route.name;
+      
+      // Track that we're editing a saved map
+      currentSavedRouteId = routeId;
+      updateSaveButtonVisibility();
       showMainView();
+      
+      // Show "Autosaved" indicator immediately for saved maps
+      showAutosaveIndicator("saved");
   };
 
   if (!adminMode) {
@@ -541,14 +734,19 @@ async function init() {
     // Clear map button
     if (clearMapButton) {
       clearMapButton.addEventListener("click", () => {
-        if (confirm("Clear all markers and routes from the map?")) {
-          clearState();
-          renderState(handleMarkerClick);
-        }
+        showConfirmModal(
+          "Clear Map?",
+          "Are you sure you want to clear all markers and routes from the map?",
+          "Clear",
+          () => {
+            clearState();
+            renderState(handleMarkerClick);
+          }
+        );
       });
     }
 
-    // Save route button
+    // Save route button (only shows for new unsaved maps)
     if (saveRouteButton) {
       saveRouteButton.addEventListener("click", async () => {
         const routeName = routeNameInput?.value || "Unnamed map";
@@ -557,11 +755,12 @@ async function init() {
         
         const savedRoute = saveRoute(routeName, currentMapId, stateString);
         if (savedRoute) {
-          const originalText = saveRouteButton.textContent;
-          saveRouteButton.textContent = "✓ Saved!";
-          setTimeout(() => {
-            saveRouteButton.textContent = originalText;
-          }, 2000);
+          // Now this map is saved, switch to autosave mode
+          currentSavedRouteId = savedRoute.id;
+          updateSaveButtonVisibility();
+          
+          // Show saved indicator
+          showAutosaveIndicator("saved");
         }
       });
     }
@@ -576,8 +775,21 @@ async function init() {
         // Reset route name
         if (routeNameInput) routeNameInput.value = "Unnamed map";
         
+        // Clear saved route ID (this is a new unsaved map)
+        currentSavedRouteId = null;
+        updateSaveButtonVisibility();
+        
         // Show main view
         showMainView();
+      });
+    }
+
+    // Route name input - trigger autosave on change
+    if (routeNameInput) {
+      routeNameInput.addEventListener("input", () => {
+        if (currentSavedRouteId) {
+          triggerAutosave();
+        }
       });
     }
 
@@ -623,20 +835,19 @@ async function init() {
     setupAdminControls(adminControlsEl, () => mapSelectEl.value);
   }
 
-  // Handle marker context menu (only for user markers, not fixed markers)
-  markersLayer.on("contextmenu", (ev) => {
-    const marker = ev.layer;
+  // Create a global function to show marker context menu
+  const showMarkerContextMenu = (marker, originalEvent) => {
     if (!marker || marker.isFixed) return; // Fixed markers can't be deleted
-    L.DomEvent.preventDefault(ev);
-    const clientX = ev.originalEvent?.clientX ?? 0;
-    const clientY = ev.originalEvent?.clientY ?? 0;
+    
+    const clientX = originalEvent?.clientX ?? 0;
+    const clientY = originalEvent?.clientY ?? 0;
 
-    if (marker.markerType === "route") {
-      showContextMenu(contextMenuEl, "route", clientX, clientY);
-    } else {
-      showContextMenu(contextMenuEl, "marker", clientX, clientY, { marker });
-    }
-  });
+    // Show context menu for any user-drawn marker (custom or route node)
+    showContextMenu(contextMenuEl, "marker", clientX, clientY, { marker });
+  };
+
+  // Make it globally accessible
+  window._showMarkerContextMenu = showMarkerContextMenu;
 
   // Set up marker click handler for user markers
   const handleMarkerClick = (marker, e) => {
@@ -734,8 +945,9 @@ async function init() {
   if (!adminMode && urlState && Array.isArray(urlState)) {
     const validState = [];
     for (const entry of urlState) {
-      if (!Array.isArray(entry) || entry.length !== 3) continue;
-      const [typeId, lat, lng] = entry;
+      // Allow 3 elements (no note) or 4 elements (with note)
+      if (!Array.isArray(entry) || entry.length < 3 || entry.length > 4) continue;
+      const [typeId, lat, lng, note] = entry;
       if (
         typeof typeId !== "number" ||
         typeof lat !== "number" ||
@@ -744,7 +956,12 @@ async function init() {
         continue;
       }
       if (!MARKER_TYPES_BY_ID[typeId]) continue;
-      validState.push([typeId, lat, lng]);
+      // Preserve note if it exists
+      if (note && typeof note === "string") {
+        validState.push([typeId, lat, lng, note]);
+      } else {
+        validState.push([typeId, lat, lng]);
+      }
     }
     setState(validState);
     renderState(handleMarkerClick);
@@ -752,10 +969,15 @@ async function init() {
     // Show main view when loading from a shared URL
     if (!adminMode) {
       if (routeNameInput) routeNameInput.value = "Unnamed map";
+      // Loading from URL = new unsaved map
+      currentSavedRouteId = null;
+      updateSaveButtonVisibility();
       showMainView();
     }
   } else if (!adminMode) {
     // No URL state - show saved routes view
+    currentSavedRouteId = null;
+    updateSaveButtonVisibility();
     showSavedRoutesView();
   }
 

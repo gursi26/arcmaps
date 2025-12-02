@@ -15,15 +15,40 @@ export function showContextMenu(contextMenuEl, type, clientX, clientY, payload =
 
   contextMenuState = { type, ...payload };
 
+  const addNoteBtn = contextMenuEl.querySelector('[data-action="add-note"]');
   const deleteMarkerBtn = contextMenuEl.querySelector('[data-action="delete-marker"]');
   const deleteRouteBtn = contextMenuEl.querySelector('[data-action="delete-route"]');
 
-  // Toggle which actions are visible
+  // Determine if marker can have notes (custom markers or route nodes)
+  const canHaveNote = payload.marker && payload.marker.markerType && 
+    (payload.marker.markerType.startsWith('custom') || payload.marker.markerType.startsWith('route'));
+  
+  // Check if this is a route node
+  const isRouteNode = payload.marker && payload.marker.markerType && 
+    payload.marker.markerType.startsWith('route');
+
+  // Toggle which actions are visible and update text
+  if (addNoteBtn) {
+    if (canHaveNote) {
+      // Check if marker already has a note
+      const hasNote = window._getMarkerNote && 
+        payload.marker && 
+        payload.marker.stateIndex !== undefined &&
+        window._getMarkerNote(payload.marker.stateIndex);
+      
+      addNoteBtn.textContent = hasNote ? "Edit Note" : "Add Note";
+      addNoteBtn.style.display = "block";
+    } else {
+      addNoteBtn.style.display = "none";
+    }
+  }
   if (deleteMarkerBtn) {
-    deleteMarkerBtn.style.display = type === "marker" ? "block" : "none";
+    deleteMarkerBtn.style.display = payload.marker ? "block" : "none";
+    deleteMarkerBtn.textContent = isRouteNode ? "Delete Node" : "Delete Marker";
   }
   if (deleteRouteBtn) {
-    deleteRouteBtn.style.display = type === "route" ? "block" : "none";
+    // Show "Delete Route" only for route nodes
+    deleteRouteBtn.style.display = isRouteNode ? "block" : "none";
   }
 
   // Position menu
@@ -53,6 +78,7 @@ export function setupContextMenu(contextMenuEl, adminMode = false) {
     return;
   }
 
+  const addNoteBtn = contextMenuEl.querySelector('[data-action="add-note"]');
   const deleteMarkerBtn = contextMenuEl.querySelector('[data-action="delete-marker"]');
   const deleteRouteBtn = contextMenuEl.querySelector('[data-action="delete-route"]');
 
@@ -63,11 +89,28 @@ export function setupContextMenu(contextMenuEl, adminMode = false) {
     }
   });
 
+  // Add note action
+  if (addNoteBtn) {
+    addNoteBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (contextMenuState?.marker) {
+        const marker = contextMenuState.marker;
+        const idx = marker.stateIndex;
+        
+        // Show note input popup
+        if (window._showNoteInput) {
+          window._showNoteInput(idx, e.clientX, e.clientY);
+        }
+      }
+      hideContextMenu(contextMenuEl);
+    });
+  }
+
   // Delete marker action
   if (deleteMarkerBtn) {
     deleteMarkerBtn.addEventListener("click", (e) => {
       e.stopPropagation();
-      if (contextMenuState?.type === "marker" && contextMenuState.marker) {
+      if (contextMenuState?.marker) {
         const idx = contextMenuState.marker.stateIndex;
         removeMarker(idx);
       }
@@ -75,12 +118,13 @@ export function setupContextMenu(contextMenuEl, adminMode = false) {
     });
   }
 
-  // Delete route action
+  // Delete route action (delete all route nodes of this type)
   if (deleteRouteBtn) {
     deleteRouteBtn.addEventListener("click", (e) => {
       e.stopPropagation();
-      if (contextMenuState?.type === "route") {
-        removeMarkersByType("route");
+      if (contextMenuState?.marker && contextMenuState.marker.markerType) {
+        const routeType = contextMenuState.marker.markerType;
+        removeMarkersByType(routeType);
       }
       hideContextMenu(contextMenuEl);
     });

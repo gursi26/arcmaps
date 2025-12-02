@@ -1,7 +1,8 @@
 import { MARKER_TYPES, MARKER_TYPES_BY_ID, PIN_ICONS } from "./constants.js";
 import { roundCoord } from "./urlState.js";
 
-// Single unified state array: each entry is [typeId, lat, lng]
+// Single unified state array: each entry is [typeId, lat, lng, note?]
+// note is optional and can be undefined or a string
 let state = [];
 
 // Layer groups for rendering
@@ -53,6 +54,30 @@ export function isMarkerVisible(markerType) {
   return visibilityState[markerType] !== false;
 }
 
+// Set note for a marker at specific index
+export function setMarkerNote(index, note) {
+  if (index >= 0 && index < state.length) {
+    const entry = state[index];
+    // Update or add note (4th element in tuple)
+    if (note && note.trim()) {
+      state[index] = [entry[0], entry[1], entry[2], note.trim()];
+    } else {
+      // Remove note if empty
+      state[index] = [entry[0], entry[1], entry[2]];
+    }
+    renderState(window._markerClickHandler);
+    if (window._triggerAutosave) window._triggerAutosave();
+  }
+}
+
+// Get note for a marker at specific index
+export function getMarkerNote(index) {
+  if (index >= 0 && index < state.length) {
+    return state[index][3] || null;
+  }
+  return null;
+}
+
 // Render all markers from state array
 export function renderState(onMarkerClick = null) {
   if (!markersLayer || !routeLayer) return;
@@ -89,7 +114,8 @@ export function renderState(onMarkerClick = null) {
   });
 
   // Draw all markers
-  state.forEach(([typeId, lat, lng], idx) => {
+  state.forEach((entry, idx) => {
+    const [typeId, lat, lng, note] = entry;
     const latlng = L.latLng(lat, lng);
     const markerType = MARKER_TYPES_BY_ID[typeId];
     
@@ -109,12 +135,41 @@ export function renderState(onMarkerClick = null) {
       marker.stateIndex = idx;
       marker.markerType = markerType;
       
+      // Bind tooltip if note exists
+      if (note) {
+        marker.bindTooltip(note, {
+          permanent: false,
+          direction: 'top',
+          offset: [0, -5],
+          className: 'marker-note-tooltip'
+        });
+        
+        // Add note indicator icon (speech bubble with lines)
+        const indicatorIcon = L.divIcon({
+          className: 'note-indicator',
+          html: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4V4c0-1.1-.9-2-2-2z"/><line x1="7" y1="8" x2="17" y2="8" stroke="#0f172a" stroke-width="2" stroke-linecap="round"/><line x1="7" y1="12" x2="13" y2="12" stroke="#0f172a" stroke-width="2" stroke-linecap="round"/></svg>',
+          iconSize: [16, 16],
+          iconAnchor: [-2, 14],
+        });
+        const indicator = L.marker(latlng, { icon: indicatorIcon, interactive: false }).addTo(markersLayer);
+        indicator.isNoteIndicator = true;
+      }
+      
       if (onMarkerClick) {
         marker.on("click", (e) => {
           L.DomEvent.stopPropagation(e);
           onMarkerClick(marker, e);
         });
       }
+      
+      // Attach contextmenu handler for route nodes
+      marker.on("contextmenu", (e) => {
+        L.DomEvent.preventDefault(e);
+        L.DomEvent.stopPropagation(e);
+        if (window._showMarkerContextMenu) {
+          window._showMarkerContextMenu(marker, e.originalEvent);
+        }
+      });
     } else {
       // Regular pin marker
       let icon = PIN_ICONS[markerType];
@@ -143,12 +198,41 @@ export function renderState(onMarkerClick = null) {
       marker.stateIndex = idx;
       marker.markerType = markerType;
       
+      // Bind tooltip if note exists
+      if (note) {
+        marker.bindTooltip(note, {
+          permanent: false,
+          direction: 'top',
+          offset: [0, -40],
+          className: 'marker-note-tooltip'
+        });
+        
+        // Add note indicator icon (offset for pin markers which are taller)
+        const indicatorIcon = L.divIcon({
+          className: 'note-indicator',
+          html: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4V4c0-1.1-.9-2-2-2z"/><line x1="7" y1="8" x2="17" y2="8" stroke="#0f172a" stroke-width="2" stroke-linecap="round"/><line x1="7" y1="12" x2="13" y2="12" stroke="#0f172a" stroke-width="2" stroke-linecap="round"/></svg>',
+          iconSize: [16, 16],
+          iconAnchor: [-6, 46],
+        });
+        const indicator = L.marker(latlng, { icon: indicatorIcon, interactive: false }).addTo(markersLayer);
+        indicator.isNoteIndicator = true;
+      }
+      
       if (onMarkerClick) {
         marker.on("click", (e) => {
           L.DomEvent.stopPropagation(e);
           onMarkerClick(marker, e);
         });
       }
+      
+      // Attach contextmenu handler for custom markers
+      marker.on("contextmenu", (e) => {
+        L.DomEvent.preventDefault(e);
+        L.DomEvent.stopPropagation(e);
+        if (window._showMarkerContextMenu) {
+          window._showMarkerContextMenu(marker, e.originalEvent);
+        }
+      });
     }
   });
 
@@ -189,6 +273,7 @@ export function addMarker(latlng, markerType) {
   if (typeId === undefined) return;
   state.push([typeId, roundCoord(latlng.lat), roundCoord(latlng.lng)]);
   renderState(window._markerClickHandler);
+  if (window._triggerAutosave) window._triggerAutosave();
 }
 
 // Remove marker at specific index
@@ -196,6 +281,7 @@ export function removeMarker(index) {
   if (index >= 0 && index < state.length) {
     state.splice(index, 1);
     renderState(window._markerClickHandler);
+    if (window._triggerAutosave) window._triggerAutosave();
   }
 }
 
@@ -205,6 +291,7 @@ export function removeMarkersByType(markerType) {
   if (typeId === undefined) return;
   state = state.filter(([id]) => id !== typeId);
   renderState(window._markerClickHandler);
+  if (window._triggerAutosave) window._triggerAutosave();
 }
 
 // Undo last marker
@@ -212,6 +299,7 @@ export function undoLastMarker() {
   if (state.length > 0) {
     state.pop();
     renderState(window._markerClickHandler);
+    if (window._triggerAutosave) window._triggerAutosave();
   }
 }
 

@@ -53,3 +53,23 @@ export function getRoute(routeId) {
   return routes.find((r) => r.id === routeId);
 }
 
+// Update an existing route in localStorage
+export function updateRoute(routeId, updates) {
+  try {
+    const routes = getSavedRoutes();
+    const index = routes.findIndex((r) => r.id === routeId);
+    if (index === -1) return null;
+    
+    routes[index] = {
+      ...routes[index],
+      ...updates,
+      savedAt: new Date().toISOString(),
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(routes));
+    return routes[index];
+  } catch (err) {
+    console.error("Failed to update route:", err);
+    return null;
+  }
+}
+
