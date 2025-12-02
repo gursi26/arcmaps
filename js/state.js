@@ -36,38 +36,48 @@ export function renderState(onMarkerClick = null) {
   markersLayer.clearLayers();
   routeLayer.clearLayers();
 
-  // Filter route nodes for polyline
-  const routeNodes = state
-    .filter(([typeId]) => typeId === MARKER_TYPES.route)
-    .map(([, lat, lng]) => L.latLng(lat, lng));
+  // Define route colors
+  const routeColors = {
+    route: { line: "#e5e7eb", dot: "#fbbf24", dotBorder: "#facc15" },
+    route1: { line: "#bfdbfe", dot: "#3b82f6", dotBorder: "#60a5fa" },
+    route2: { line: "#fecaca", dot: "#ef4444", dotBorder: "#f87171" },
+  };
 
-  // Draw polyline if we have route nodes
-  if (routeNodes.length > 0) {
-    L.polyline(routeNodes, {
-      color: "#e5e7eb",
-      weight: 4,
-      opacity: 1,
-      dashArray: "2 10",
-      interactive: false,
-    }).addTo(routeLayer);
-  }
+  // Filter and draw route nodes for each route type
+  ["route", "route1", "route2"].forEach(routeType => {
+    const routeNodes = state
+      .filter(([typeId]) => typeId === MARKER_TYPES[routeType])
+      .map(([, lat, lng]) => L.latLng(lat, lng));
+
+    // Draw polyline if we have route nodes
+    if (routeNodes.length > 0) {
+      L.polyline(routeNodes, {
+        color: routeColors[routeType].line,
+        weight: 4,
+        opacity: 1,
+        dashArray: "2 10",
+        interactive: false,
+      }).addTo(routeLayer);
+    }
+  });
 
   // Draw all markers
   state.forEach(([typeId, lat, lng], idx) => {
     const latlng = L.latLng(lat, lng);
     const markerType = MARKER_TYPES_BY_ID[typeId];
 
-    if (typeId === MARKER_TYPES.route) {
-      // Route node
+    if (typeId === MARKER_TYPES.route || typeId === MARKER_TYPES.route1 || typeId === MARKER_TYPES.route2) {
+      // Route node - get colors based on route type
+      const colors = routeColors[markerType] || routeColors.route;
       const marker = L.circleMarker(latlng, {
         radius: 5,
-        color: "#facc15",
+        color: colors.dotBorder,
         weight: 2,
-        fillColor: "#fbbf24",
+        fillColor: colors.dot,
         fillOpacity: 0.95,
       }).addTo(markersLayer);
       marker.stateIndex = idx;
-      marker.markerType = "route";
+      marker.markerType = markerType;
       
       if (onMarkerClick) {
         marker.on("click", (e) => {
@@ -77,7 +87,27 @@ export function renderState(onMarkerClick = null) {
       }
     } else {
       // Regular pin marker
-      const icon = PIN_ICONS[markerType] || undefined;
+      let icon = PIN_ICONS[markerType];
+      
+      // Create custom colored icons for custom marker variants
+      if (markerType === "custom1") {
+        icon = L.divIcon({
+          className: "custom-marker-icon",
+          html: '<svg xmlns="http://www.w3.org/2000/svg" width="25" height="41" viewBox="0 0 25 41"><path fill="#dc2626" stroke="#ffffff" stroke-width="1" d="M12.5 0C5.596 0 0 5.596 0 12.5c0 9.375 12.5 28.125 12.5 28.125S25 21.875 25 12.5C25 5.596 19.404 0 12.5 0z"/><circle cx="12.5" cy="12.5" r="4" fill="#ffffff"/></svg>',
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
+          popupAnchor: [1, -34],
+        });
+      } else if (markerType === "custom2") {
+        icon = L.divIcon({
+          className: "custom-marker-icon",
+          html: '<svg xmlns="http://www.w3.org/2000/svg" width="25" height="41" viewBox="0 0 25 41"><path fill="#16a34a" stroke="#ffffff" stroke-width="1" d="M12.5 0C5.596 0 0 5.596 0 12.5c0 9.375 12.5 28.125 12.5 28.125S25 21.875 25 12.5C25 5.596 19.404 0 12.5 0z"/><circle cx="12.5" cy="12.5" r="4" fill="#ffffff"/></svg>',
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
+          popupAnchor: [1, -34],
+        });
+      }
+      
       const markerOptions = icon ? { icon } : undefined;
       const marker = L.marker(latlng, markerOptions).addTo(markersLayer);
       marker.stateIndex = idx;

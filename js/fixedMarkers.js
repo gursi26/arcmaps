@@ -13,6 +13,7 @@ const visibilityState = {
   metro: true,
   elevator: true,
   "raider-hatch": true,
+  "locked-room": true,
 };
 
 // Fixed marker types (everything except custom and route)
@@ -24,6 +25,7 @@ export const FIXED_MARKER_TYPES = [
   "metro",
   "elevator",
   "raider-hatch",
+  "locked-room",
 ];
 
 // Initialize with Leaflet layer

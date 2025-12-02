@@ -102,9 +102,10 @@ export function setupUndoHandler(adminMode = false) {
 }
 
 // Setup pin/route mode buttons
-export function setupModeButtons(pinButtons, routeButton, onModeChange) {
+export function setupModeButtons(pinButtons, routeButtons, onModeChange) {
   let activePinType = null;
   let routeModeEnabled = false;
+  let activeRouteType = "route";
 
   const updatePinButtons = () => {
     pinButtons.forEach((btn) => {
@@ -113,8 +114,11 @@ export function setupModeButtons(pinButtons, routeButton, onModeChange) {
     });
   };
 
-  const updateRouteButton = () => {
-    routeButton.classList.toggle("route-button-active", routeModeEnabled);
+  const updateRouteButtons = () => {
+    routeButtons.forEach((btn) => {
+      const type = btn.dataset.routeType || "route";
+      btn.classList.toggle("route-button-active", routeModeEnabled && type === activeRouteType);
+    });
   };
 
   // Pin type buttons
@@ -128,33 +132,48 @@ export function setupModeButtons(pinButtons, routeButton, onModeChange) {
       // Disable route mode when pin mode is active
       if (activePinType) {
         routeModeEnabled = false;
-        updateRouteButton();
+        updateRouteButtons();
       }
 
       updatePinButtons();
-      onModeChange(activePinType, false);
+      onModeChange(activePinType, false, activeRouteType);
     });
   });
 
-  // Route drawing button
-  if (routeButton) {
-    routeButton.addEventListener("click", () => {
-      routeModeEnabled = !routeModeEnabled;
-
-      if (routeModeEnabled) {
+  // Route drawing buttons
+  routeButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const type = btn.dataset.routeType || "route";
+      
+      // If clicking the same route button, toggle off
+      if (routeModeEnabled && activeRouteType === type) {
+        routeModeEnabled = false;
+      } else {
+        // Otherwise, enable route mode with this route type
+        routeModeEnabled = true;
+        activeRouteType = type;
         activePinType = null;
         updatePinButtons();
       }
 
-      updateRouteButton();
-      onModeChange(null, routeModeEnabled);
+      updateRouteButtons();
+      onModeChange(null, routeModeEnabled, activeRouteType);
     });
-  }
+  });
 
   updatePinButtons();
-  updateRouteButton();
+  updateRouteButtons();
 
-  return { activePinType, routeModeEnabled };
+  // Function to deselect all tools
+  const deselectAll = () => {
+    activePinType = null;
+    routeModeEnabled = false;
+    updatePinButtons();
+    updateRouteButtons();
+    onModeChange(null, false, activeRouteType);
+  };
+
+  return { activePinType, routeModeEnabled, activeRouteType, deselectAll };
 }
 
 // Setup share button

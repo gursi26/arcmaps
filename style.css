@@ -6,7 +6,7 @@
 
 :root {
   /* Tune this to change how wide the open sidebar is */
-  --sidebar-open-width: 15vw;
+  --sidebar-open-width: 21vw;
 }
 
 html,
@@ -205,7 +205,7 @@ body {
 
 .pin-buttons {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.5rem;
 }
 
@@ -236,15 +236,15 @@ body {
 
 .legend-buttons {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.5rem;
 }
 
 .pin-button,
 .route-button,
 .legend-button {
-  font-size: 0.9rem;
-  padding: 0.45rem 0.75rem;
+  font-size: 0.8rem;
+  padding: 0.35rem 0.5rem;
   border-radius: 0.4rem;
   border: 1px solid rgba(148, 163, 184, 0.9);
   background: #020617;
@@ -258,6 +258,18 @@ body {
   aspect-ratio: 1 / 1;
   text-align: center;
   transition: opacity 0.2s ease, background 0.2s ease;
+  position: relative;
+}
+
+.button-shortcut {
+  position: absolute;
+  top: 3px;
+  left: 4px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: rgba(203, 213, 225, 0.6);
+  line-height: 1;
+  pointer-events: none;
 }
 
 .pin-button.pin-button-active,
@@ -382,6 +394,11 @@ body {
   color: #fca5a5;
 }
 
+.pin-icon-locked-room {
+  border-color: #d97706;
+  color: #fde68a;
+}
+
 .pin-button-label,
 .route-button-label {
   font-size: 0.75rem;
@@ -395,30 +412,67 @@ body {
   justify-content: center;
 }
 
+.draw-buttons-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.draw-buttons-row:last-child {
+  margin-bottom: 0;
+}
+
 .pin-icon-custom {
   border-color: #38bdf8;
   color: #e0f2fe;
 }
 
 .marker-legend-custom {
-  width: 22px;
-  height: 36px;
-  background-image: url("https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png");
+  width: 24px;
+  height: 40px;
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
 }
 
-.route-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background-color: #fbbf24;
-  border: 2px solid #facc15;
+.marker-legend-custom-blue {
+  background-image: url("https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png");
+}
+
+.marker-legend-custom-red {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="25" height="41" viewBox="0 0 25 41"><path fill="%23dc2626" stroke="%23ffffff" stroke-width="1" d="M12.5 0C5.596 0 0 5.596 0 12.5c0 9.375 12.5 28.125 12.5 28.125S25 21.875 25 12.5C25 5.596 19.404 0 12.5 0z"/><circle cx="12.5" cy="12.5" r="4" fill="%23ffffff"/></svg>');
+}
+
+.marker-legend-custom-green {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="25" height="41" viewBox="0 0 25 41"><path fill="%2316a34a" stroke="%23ffffff" stroke-width="1" d="M12.5 0C5.596 0 0 5.596 0 12.5c0 9.375 12.5 28.125 12.5 28.125S25 21.875 25 12.5C25 5.596 19.404 0 12.5 0z"/><circle cx="12.5" cy="12.5" r="4" fill="%23ffffff"/></svg>');
+}
+
+.route-icon {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  display: block;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.route-icon-yellow {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36"><line x1="6" y1="6" x2="30" y2="30" stroke="%23e5e7eb" stroke-width="2.5" stroke-dasharray="4,4" stroke-linecap="round"/><circle cx="6" cy="6" r="4.5" fill="%23fbbf24" stroke="%23facc15" stroke-width="2"/><circle cx="30" cy="30" r="4.5" fill="%23fbbf24" stroke="%23facc15" stroke-width="2"/></svg>');
+}
+
+.route-icon-blue {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36"><line x1="6" y1="6" x2="30" y2="30" stroke="%23bfdbfe" stroke-width="2.5" stroke-dasharray="4,4" stroke-linecap="round"/><circle cx="6" cy="6" r="4.5" fill="%233b82f6" stroke="%2360a5fa" stroke-width="2"/><circle cx="30" cy="30" r="4.5" fill="%233b82f6" stroke="%2360a5fa" stroke-width="2"/></svg>');
+}
+
+.route-icon-red {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36"><line x1="6" y1="6" x2="30" y2="30" stroke="%23fecaca" stroke-width="2.5" stroke-dasharray="4,4" stroke-linecap="round"/><circle cx="6" cy="6" r="4.5" fill="%23ef4444" stroke="%23f87171" stroke-width="2"/><circle cx="30" cy="30" r="4.5" fill="%23ef4444" stroke="%23f87171" stroke-width="2"/></svg>');
 }
 
 .save-route-button,
 .share-button,
+.clear-map-button,
 .new-route-button {
   width: 100%;
   font-size: 0.9rem;
@@ -433,10 +487,17 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-bottom: 0.5rem;
+}
+
+.save-route-button:last-child,
+.share-button:last-child,
+.clear-map-button:last-child,
+.new-route-button:last-child {
+  margin-bottom: 0;
 }
 
 .save-route-button {
-  margin-bottom: 0.5rem;
   background: #1e3a8a;
   border-color: #3b82f6;
 }
@@ -444,6 +505,16 @@ body {
 .save-route-button:hover {
   background: #1e40af;
   border-color: #60a5fa;
+}
+
+.clear-map-button {
+  background: #7f1d1d;
+  border-color: #991b1b;
+}
+
+.clear-map-button:hover {
+  background: #991b1b;
+  border-color: #dc2626;
 }
 
 .new-route-button {

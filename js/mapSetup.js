@@ -84,8 +84,7 @@ export function loadMap(leafletMap, mapEntry, markersLayer, routeLayer) {
         leafletMap.removeLayer(currentOverlay);
       }
 
-      // Clear state and layers when switching maps
-      clearState();
+      // Clear layers when switching maps (but keep state)
       markersLayer.clearLayers();
       routeLayer.clearLayers();
 

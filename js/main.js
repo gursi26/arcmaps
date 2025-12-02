@@ -65,7 +65,9 @@ async function init() {
   const pinButtons = Array.from(
     document.querySelectorAll(".pin-button[data-pin-type]")
   );
-  const routeButtonEl = document.getElementById("route-button");
+  const routeButtons = Array.from(
+    document.querySelectorAll(".route-button[data-route-type]")
+  );
   const shareButtonEl = document.getElementById("share-button");
   const contextMenuEl = document.getElementById("context-menu");
   const adminControlsEl = document.getElementById("admin-controls");
@@ -81,6 +83,7 @@ async function init() {
   const savedRoutesTitle = document.getElementById("saved-routes-title");
   const routeNameInput = document.getElementById("route-name-input");
   const saveRouteButton = document.getElementById("save-route-button");
+  const clearMapButton = document.getElementById("clear-map-button");
   const newRouteButton = document.getElementById("new-route-button");
   const mainView = document.getElementById("main-view");
   const savedRoutesView = document.getElementById("saved-routes-view");
@@ -134,6 +137,7 @@ async function init() {
     if (adminSection) adminSection.style.display = "block";
     if (shareButtonEl) shareButtonEl.style.display = "none";
     if (saveRouteButton) saveRouteButton.style.display = "none";
+    if (clearMapButton) clearMapButton.style.display = "none";
     if (backButton) backButton.style.display = "none";
     if (routeNameInput) routeNameInput.parentElement.style.display = "none";
     if (adminControlsEl) adminControlsEl.style.display = "flex";
@@ -143,6 +147,7 @@ async function init() {
     if (adminSection) adminSection.style.display = "none";
     if (shareButtonEl) shareButtonEl.style.display = "block";
     if (saveRouteButton) saveRouteButton.style.display = "block";
+    if (clearMapButton) clearMapButton.style.display = "block";
     if (backButton) backButton.style.display = "block";
     if (routeNameInput) routeNameInput.parentElement.style.display = "flex";
     if (adminControlsEl) adminControlsEl.style.display = "none";
@@ -173,15 +178,15 @@ async function init() {
   setupResizeHandler(leafletMap);
 
   // Track current drawing mode
-  let currentMode = { activePinType: null, routeModeEnabled: false };
+  let currentMode = { activePinType: null, routeModeEnabled: false, activeRouteType: "route" };
 
   // Route preview line (shows from last node to cursor)
   let routePreviewLine = null;
 
-  // Helper to get all route nodes from current state
-  const getRouteNodes = () => {
+  // Helper to get all route nodes from current state for the active route type
+  const getRouteNodes = (routeType) => {
     return getState()
-      .filter(([typeId]) => typeId === MARKER_TYPES_BY_ID.indexOf("route"))
+      .filter(([typeId]) => typeId === MARKER_TYPES_BY_ID.indexOf(routeType))
       .map(([, lat, lng]) => L.latLng(lat, lng));
   };
 
@@ -195,7 +200,8 @@ async function init() {
       return;
     }
 
-    const routeNodes = getRouteNodes();
+    const routeType = currentMode.activeRouteType || "route";
+    const routeNodes = getRouteNodes(routeType);
     if (routeNodes.length === 0) {
       if (routePreviewLine) {
         leafletMap.removeLayer(routePreviewLine);
@@ -204,14 +210,23 @@ async function init() {
       return;
     }
 
+    // Define colors for each route type
+    const routeColors = {
+      route: "#fbbf24",
+      route1: "#3b82f6",
+      route2: "#ef4444",
+    };
+    const previewColor = routeColors[routeType] || routeColors.route;
+
     const lastNode = routeNodes[routeNodes.length - 1];
     const previewPath = [lastNode, cursorLatLng];
 
     if (routePreviewLine) {
       routePreviewLine.setLatLngs(previewPath);
+      routePreviewLine.setStyle({ color: previewColor });
     } else {
       routePreviewLine = L.polyline(previewPath, {
-        color: "#fbbf24",
+        color: previewColor,
         weight: 3,
         opacity: 0.6,
         dashArray: "5 8",
@@ -223,9 +238,10 @@ async function init() {
   // Setup UI handlers
   setupContextMenu(contextMenuEl, adminMode);
   setupUndoHandler(adminMode);
-  setupModeButtons(pinButtons, routeButtonEl, (pinType, routeMode) => {
+  const modeControls = setupModeButtons(pinButtons, routeButtons, (pinType, routeMode, routeType) => {
     currentMode.activePinType = pinType;
     currentMode.routeModeEnabled = routeMode;
+    currentMode.activeRouteType = routeType;
     
     // Toggle CSS class on map container for hover effects
     const mapContainer = leafletMap.getContainer();
@@ -241,38 +257,69 @@ async function init() {
       routePreviewLine = null;
     }
   });
-  
-  if (!adminMode) {
-    setupShareButton(
-      shareButtonEl,
-      async () => encodeStateToUrl(getState()),
-      () => mapSelectEl.value
-    );
 
-    // Saved routes functionality
-    const showMainView = () => {
-      if (mainView) mainView.style.display = "block";
-      if (savedRoutesView) savedRoutesView.style.display = "none";
-      if (backButton) {
-        backButton.style.display = "block";
-        backButton.textContent = "← My Saved Routes";
+  // Setup keyboard shortcuts for drawing tools
+  document.addEventListener("keydown", (e) => {
+    // Don't trigger if typing in an input field
+    if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+    
+    // Q key - deselect all tools
+    if (e.key === "q" || e.key === "Q") {
+      if (modeControls && modeControls.deselectAll) {
+        modeControls.deselectAll();
       }
-      if (savedRoutesTitle) savedRoutesTitle.style.display = "none";
-      if (mainFooter) mainFooter.style.display = "block";
-      if (savedRoutesFooter) savedRoutesFooter.style.display = "none";
+      return;
+    }
+    
+    // Number keys 1-6 for draw tools
+    const keyMap = {
+      "1": { type: "pin", value: "custom" },
+      "2": { type: "pin", value: "custom1" },
+      "3": { type: "pin", value: "custom2" },
+      "4": { type: "route", value: "route" },
+      "5": { type: "route", value: "route1" },
+      "6": { type: "route", value: "route2" },
     };
+    
+    if (keyMap[e.key] && !adminMode) {
+      const action = keyMap[e.key];
+      
+      if (action.type === "pin") {
+        // Find and click the corresponding pin button
+        const button = pinButtons.find(btn => btn.dataset.pinType === action.value);
+        if (button) button.click();
+      } else if (action.type === "route") {
+        // Find and click the corresponding route button
+        const button = routeButtons.find(btn => btn.dataset.routeType === action.value);
+        if (button) button.click();
+      }
+    }
+  });
+  
+  // Saved routes functionality (define outside if block for accessibility)
+  const showMainView = () => {
+    if (mainView) mainView.style.display = "block";
+    if (savedRoutesView) savedRoutesView.style.display = "none";
+    if (backButton) {
+      backButton.style.display = "block";
+      backButton.textContent = "← Saved Maps";
+    }
+    if (savedRoutesTitle) savedRoutesTitle.style.display = "none";
+    if (mainFooter) mainFooter.style.display = "block";
+    if (savedRoutesFooter) savedRoutesFooter.style.display = "none";
+  };
 
-    const showSavedRoutesView = () => {
-      if (mainView) mainView.style.display = "none";
-      if (savedRoutesView) savedRoutesView.style.display = "block";
-      if (backButton) backButton.style.display = "none";
-      if (savedRoutesTitle) savedRoutesTitle.style.display = "block";
-      if (mainFooter) mainFooter.style.display = "none";
-      if (savedRoutesFooter) savedRoutesFooter.style.display = "block";
-      renderSavedRoutesList();
-    };
+  const showSavedRoutesView = () => {
+    if (mainView) mainView.style.display = "none";
+    if (savedRoutesView) savedRoutesView.style.display = "block";
+    if (backButton) backButton.style.display = "none";
+    if (savedRoutesTitle) savedRoutesTitle.style.display = "block";
+    if (mainFooter) mainFooter.style.display = "none";
+    if (savedRoutesFooter) savedRoutesFooter.style.display = "block";
+    renderSavedRoutesList();
+  };
 
-    const renderSavedRoutesList = () => {
+  const renderSavedRoutesList = () => {
       const routes = getSavedRoutes();
       
       if (routes.length === 0) {
@@ -368,9 +415,9 @@ async function init() {
           showDeleteModal(routeId, renderSavedRoutesList);
         });
       });
-    };
+  };
 
-    const loadSavedRoute = async (routeId) => {
+  const loadSavedRoute = async (routeId) => {
       const route = getRoute(routeId);
       if (!route) return;
 
@@ -384,6 +431,8 @@ async function init() {
       try {
         await loadMap(leafletMap, targetMap, markersLayer, routeLayer);
         await loadFixedMarkers(route.mapId);
+        // Clear existing state before loading saved route
+        clearState();
       } catch (err) {
         console.error("Failed to load map:", err);
         return;
@@ -430,7 +479,14 @@ async function init() {
       // Set route name and show main view
       if (routeNameInput) routeNameInput.value = route.name;
       showMainView();
-    };
+  };
+
+  if (!adminMode) {
+    setupShareButton(
+      shareButtonEl,
+      async () => encodeStateToUrl(getState()),
+      () => mapSelectEl.value
+    );
 
     // Back button toggles between views
     if (backButton) {
@@ -443,10 +499,20 @@ async function init() {
       });
     }
 
+    // Clear map button
+    if (clearMapButton) {
+      clearMapButton.addEventListener("click", () => {
+        if (confirm("Clear all markers and routes from the map?")) {
+          clearState();
+          renderState(handleMarkerClick);
+        }
+      });
+    }
+
     // Save route button
     if (saveRouteButton) {
       saveRouteButton.addEventListener("click", async () => {
-        const routeName = routeNameInput?.value || "Unnamed route";
+        const routeName = routeNameInput?.value || "Unnamed map";
         const currentMapId = mapSelectEl.value;
         const stateString = await encodeStateToUrl(getState());
         
@@ -469,15 +535,12 @@ async function init() {
         renderState(handleMarkerClick);
         
         // Reset route name
-        if (routeNameInput) routeNameInput.value = "Unnamed route";
+        if (routeNameInput) routeNameInput.value = "Unnamed map";
         
         // Show main view
         showMainView();
       });
     }
-
-    // Initially show saved routes view
-    showSavedRoutesView();
 
     // Setup legend buttons for visibility toggling
     legendButtons.forEach((btn) => {
@@ -541,15 +604,16 @@ async function init() {
     // Route mode: add route node at marker location
     if (currentMode.routeModeEnabled && !adminMode) {
       const latlng = marker.getLatLng();
-      addMarker(latlng, "route");
+      addMarker(latlng, currentMode.activeRouteType || "route");
       return;
     }
     
     // If in custom marker draw mode and clicked on a custom marker, remove it
     if (
       !adminMode &&
-      currentMode.activePinType === "custom" &&
-      marker.markerType === "custom"
+      currentMode.activePinType &&
+      (currentMode.activePinType === "custom" || currentMode.activePinType === "custom1" || currentMode.activePinType === "custom2") &&
+      (marker.markerType === "custom" || marker.markerType === "custom1" || marker.markerType === "custom2")
     ) {
       const idx = marker.stateIndex;
       if (idx !== undefined) {
@@ -566,7 +630,7 @@ async function init() {
     // Route mode: add route node at marker location
     if (currentMode.routeModeEnabled && !adminMode) {
       const latlng = marker.getLatLng();
-      addMarker(latlng, "route");
+      addMarker(latlng, currentMode.activeRouteType || "route");
     }
   };
   
@@ -599,7 +663,7 @@ async function init() {
         addMarker(e.latlng, currentMode.activePinType);
       }
     } else if (currentMode.routeModeEnabled && !adminMode) {
-      addMarker(e.latlng, "route");
+      addMarker(e.latlng, currentMode.activeRouteType || "route");
       // Update preview to start from new node
       updateRoutePreview(e.latlng);
     }
@@ -645,6 +709,15 @@ async function init() {
     }
     setState(validState);
     renderState(handleMarkerClick);
+    
+    // Show main view when loading from a shared URL
+    if (!adminMode) {
+      if (routeNameInput) routeNameInput.value = "Unnamed map";
+      showMainView();
+    }
+  } else if (!adminMode) {
+    // No URL state - show saved routes view
+    showSavedRoutesView();
   }
 
   // Handle map switching
@@ -665,6 +738,10 @@ async function init() {
       await loadMap(leafletMap, selectedMap, markersLayer, routeLayer);
       // Load fixed markers for the new map
       await loadFixedMarkers(selectedId);
+      // Re-render user markers after map switch
+      if (!adminMode) {
+        renderState(handleMarkerClick);
+      }
     } catch (err) {
       console.error("Failed to load selected map", err);
     }

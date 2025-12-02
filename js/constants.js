@@ -18,6 +18,11 @@ export const MARKER_TYPES = {
   metro: 6,
   elevator: 7,
   "raider-hatch": 8,
+  "locked-room": 9,
+  custom1: 10,
+  custom2: 11,
+  route1: 12,
+  route2: 13,
 };
 
 export const MARKER_TYPES_BY_ID = [
@@ -30,6 +35,11 @@ export const MARKER_TYPES_BY_ID = [
   "metro",
   "elevator",
   "raider-hatch",
+  "locked-room",
+  "custom1",
+  "custom2",
+  "route1",
+  "route2",
 ];
 
 // Leaflet icons for different marker types
@@ -82,6 +92,13 @@ export const raiderHatchIcon = L.divIcon({
   iconAnchor: [13, 26],
 });
 
+export const lockedRoomIcon = L.divIcon({
+  className: "pin-icon pin-icon-locked-room",
+  html: "L",
+  iconSize: [26, 26],
+  iconAnchor: [13, 26],
+});
+
 export const PIN_ICONS = {
   custom: null,
   spawn: spawnIcon,
@@ -91,5 +108,10 @@ export const PIN_ICONS = {
   metro: metroIcon,
   elevator: elevatorIcon,
   "raider-hatch": raiderHatchIcon,
+  "locked-room": lockedRoomIcon,
+  custom1: null,
+  custom2: null,
+  route1: null,
+  route2: null,
 };
 

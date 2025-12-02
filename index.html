@@ -20,22 +20,22 @@
       <aside id="sidebar" class="sidebar sidebar-open">
         <div class="sidebar-header">
           <button type="button" id="back-button" class="back-button" title="View Saved Routes">
-            ← My Saved Routes
+            ← Saved Maps
           </button>
           <h2 class="sidebar-header-title" id="saved-routes-title" style="display: none;">
-            My Saved Routes
+            Saved Maps
           </h2>
         </div>
         <div class="sidebar-body">
           <div id="main-view">
             <div class="route-name-section">
-              <label for="route-name-input">Route Name:</label>
+              <label for="route-name-input">Name:</label>
               <input
                 type="text"
                 id="route-name-input"
                 class="route-name-input"
-                placeholder="Unnamed route"
-                value="Unnamed route"
+                placeholder="Unnamed map"
+                value="Unnamed map"
               />
             </div>
             <div class="map-select-section">
@@ -124,30 +124,89 @@
                     <span class="pin-icon pin-icon-raider-hatch">R</span>
                   </span>
                 </button>
+                <button
+                  type="button"
+                  class="legend-button legend-button-active"
+                  data-legend-type="locked-room"
+                >
+                  <span class="pin-button-label">Locked Room</span>
+                  <span class="pin-button-icon">
+                    <span class="pin-icon pin-icon-locked-room">L</span>
+                  </span>
+                </button>
               </div>
             </div>
 
             <div class="button-section" id="draw-section">
               <h3 class="section-title">Draw</h3>
-              <div class="pin-buttons">
+              <div class="draw-buttons-row">
                 <button
                   type="button"
                   class="pin-button"
                   data-pin-type="custom"
+                  data-shortcut="1"
                 >
-                  <span class="pin-button-label">Custom Marker</span>
+                  <span class="button-shortcut">1</span>
                   <span class="pin-button-icon">
-                    <span class="marker-legend-custom"></span>
+                    <span class="marker-legend-custom marker-legend-custom-blue"></span>
                   </span>
                 </button>
                 <button
                   type="button"
+                  class="pin-button"
+                  data-pin-type="custom1"
+                  data-shortcut="2"
+                >
+                  <span class="button-shortcut">2</span>
+                  <span class="pin-button-icon">
+                    <span class="marker-legend-custom marker-legend-custom-red"></span>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  class="pin-button"
+                  data-pin-type="custom2"
+                  data-shortcut="3"
+                >
+                  <span class="button-shortcut">3</span>
+                  <span class="pin-button-icon">
+                    <span class="marker-legend-custom marker-legend-custom-green"></span>
+                  </span>
+                </button>
+              </div>
+              <div class="draw-buttons-row">
+                <button
+                  type="button"
                   id="route-button"
                   class="route-button"
+                  data-route-type="route"
+                  data-shortcut="4"
                 >
-                  <span class="route-button-label">Draw Route</span>
+                  <span class="button-shortcut">4</span>
                   <span class="pin-button-icon">
-                    <span class="route-dot"></span>
+                    <span class="route-icon route-icon-yellow"></span>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  class="route-button"
+                  data-route-type="route1"
+                  data-shortcut="5"
+                >
+                  <span class="button-shortcut">5</span>
+                  <span class="pin-button-icon">
+                    <span class="route-icon route-icon-blue"></span>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  class="route-button"
+                  data-route-type="route2"
+                  data-shortcut="6"
+                >
+                  <span class="button-shortcut">6</span>
+                  <span class="pin-button-icon">
+                    <span class="route-icon route-icon-red"></span>
                   </span>
                 </button>
               </div>
@@ -227,6 +286,16 @@
                     <span class="pin-icon pin-icon-raider-hatch">R</span>
                   </span>
                 </button>
+                <button
+                  type="button"
+                  class="pin-button"
+                  data-pin-type="locked-room"
+                >
+                  <span class="pin-button-label">Locked Room</span>
+                  <span class="pin-button-icon">
+                    <span class="pin-icon pin-icon-locked-room">L</span>
+                  </span>
+                </button>
               </div>
             </div>
           </div>
@@ -245,17 +314,24 @@
           <div id="main-footer">
             <button
               type="button"
-              id="save-route-button"
-              class="save-route-button"
-            >
-              💾 Save Route
-            </button>
-            <button
-              type="button"
               id="share-button"
               class="share-button"
             >
               Share Map URL
+            </button>
+            <button
+              type="button"
+              id="clear-map-button"
+              class="clear-map-button"
+            >
+              Clear Map
+            </button>
+            <button
+              type="button"
+              id="save-route-button"
+              class="save-route-button"
+            >
+              💾 Save Map
             </button>
           </div>
           <div id="saved-routes-footer" style="display: none;">
@@ -264,7 +340,7 @@
               id="new-route-button"
               class="new-route-button"
             >
-              + New Route
+              + New Map
             </button>
           </div>
           <div id="admin-controls" class="admin-controls">
