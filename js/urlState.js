@@ -11,7 +11,7 @@ function base64UrlEncode(bytes) {
   return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
 
-function base64UrlDecodeToBytes(encoded) {
+export function base64UrlDecodeToBytes(encoded) {
   let base64 = encoded.replace(/-/g, "+").replace(/_/g, "/");
   while (base64.length % 4) {
     base64 += "=";

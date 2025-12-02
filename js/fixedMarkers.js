@@ -95,7 +95,42 @@ export function renderFixedMarkers() {
     const markerOptions = icon ? { icon } : undefined;
     const marker = L.marker(latlng, markerOptions).addTo(fixedMarkersLayer);
     marker.isFixed = true; // Mark as non-deletable
+    marker.markerType = markerType;
+    
+    // Attach click handler if available
+    if (window._fixedMarkerClickHandler) {
+      marker.on("click", (e) => {
+        L.DomEvent.stopPropagation(e);
+        window._fixedMarkerClickHandler(marker, e);
+      });
+    }
   });
+
+  // Add hover effects to all fixed markers after rendering
+  setTimeout(() => {
+    fixedMarkersLayer.eachLayer((layer) => {
+      const element = layer.getElement && layer.getElement();
+      if (element) {
+        // Set transform origin to center for proper scaling
+        element.style.transformOrigin = "center center";
+        
+        element.addEventListener("mouseenter", function() {
+          if (document.querySelector(".leaflet-container.route-mode-active")) {
+            const currentTransform = this.style.transform || "";
+            if (!currentTransform.includes("scale")) {
+              this.style.transform = currentTransform + " scale(1.1)";
+            }
+            this.style.zIndex = "1000";
+          }
+        });
+        element.addEventListener("mouseleave", function() {
+          const currentTransform = this.style.transform || "";
+          this.style.transform = currentTransform.replace(/\s*scale\([^)]*\)/g, "");
+          this.style.zIndex = "";
+        });
+      }
+    });
+  }, 0);
 }
 
 // Add fixed marker

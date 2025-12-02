@@ -1,5 +1,5 @@
 import { MAPS, MARKER_TYPES_BY_ID } from "./constants.js";
-import { decodeStateFromUrl, encodeStateToUrl } from "./urlState.js";
+import { decodeStateFromUrl, encodeStateToUrl, base64UrlDecodeToBytes } from "./urlState.js";
 import {
   initState,
   getState,
@@ -7,6 +7,7 @@ import {
   renderState,
   addMarker,
   removeMarker,
+  clearState,
 } from "./state.js";
 import {
   createLeafletMap,
@@ -31,9 +32,20 @@ import {
   showAllMarkerTypes,
   hideAllMarkerTypes,
 } from "./fixedMarkers.js";
+import {
+  getSavedRoutes,
+  saveRoute,
+  deleteRoute,
+  getRoute,
+} from "./savedRoutes.js";
+
+// TODO - populate fixed markers for all maps
+// TODO - route naming and saving to local storage
+// TODO - text hints for draw mode, remove custom marker, ctrl-z, etc.
+// TODO - embedding into web pages? not sure how to do maybe iframe.
 
 // ADMIN MODE TOGGLE - Set to false before deploying to production
-const ALLOW_ADMIN_MODE = false;
+const ALLOW_ADMIN_MODE = true;
 
 // Check if admin mode is enabled
 function isAdminMode() {
@@ -65,6 +77,55 @@ async function init() {
   );
   const showAllBtn = document.getElementById("show-all-btn");
   const hideAllBtn = document.getElementById("hide-all-btn");
+  const backButton = document.getElementById("back-button");
+  const savedRoutesTitle = document.getElementById("saved-routes-title");
+  const routeNameInput = document.getElementById("route-name-input");
+  const saveRouteButton = document.getElementById("save-route-button");
+  const newRouteButton = document.getElementById("new-route-button");
+  const mainView = document.getElementById("main-view");
+  const savedRoutesView = document.getElementById("saved-routes-view");
+  const savedRoutesList = document.getElementById("saved-routes-list");
+  const emptyRoutesMessage = document.getElementById("empty-routes-message");
+  const mainFooter = document.getElementById("main-footer");
+  const savedRoutesFooter = document.getElementById("saved-routes-footer");
+  const deleteModal = document.getElementById("delete-modal");
+  const modalCancel = document.getElementById("modal-cancel");
+  const modalConfirm = document.getElementById("modal-confirm");
+
+  // Delete modal functionality
+  let pendingDeleteRouteId = null;
+  let onDeleteConfirm = null;
+
+  const showDeleteModal = (routeId, onConfirm) => {
+    pendingDeleteRouteId = routeId;
+    onDeleteConfirm = onConfirm;
+    if (deleteModal) deleteModal.style.display = "flex";
+  };
+
+  const hideDeleteModal = () => {
+    pendingDeleteRouteId = null;
+    onDeleteConfirm = null;
+    if (deleteModal) deleteModal.style.display = "none";
+  };
+
+  if (modalCancel) {
+    modalCancel.addEventListener("click", hideDeleteModal);
+  }
+
+  if (modalConfirm) {
+    modalConfirm.addEventListener("click", () => {
+      if (pendingDeleteRouteId && onDeleteConfirm) {
+        deleteRoute(pendingDeleteRouteId);
+        onDeleteConfirm();
+      }
+      hideDeleteModal();
+    });
+  }
+
+  // Close modal when clicking overlay
+  if (deleteModal) {
+    deleteModal.querySelector(".modal-overlay")?.addEventListener("click", hideDeleteModal);
+  }
 
   // Show/hide sections based on mode
   if (adminMode) {
@@ -72,12 +133,18 @@ async function init() {
     if (drawSection) drawSection.style.display = "none";
     if (adminSection) adminSection.style.display = "block";
     if (shareButtonEl) shareButtonEl.style.display = "none";
+    if (saveRouteButton) saveRouteButton.style.display = "none";
+    if (backButton) backButton.style.display = "none";
+    if (routeNameInput) routeNameInput.parentElement.style.display = "none";
     if (adminControlsEl) adminControlsEl.style.display = "flex";
   } else {
     if (fixedLocationsSection) fixedLocationsSection.style.display = "block";
     if (drawSection) drawSection.style.display = "block";
     if (adminSection) adminSection.style.display = "none";
     if (shareButtonEl) shareButtonEl.style.display = "block";
+    if (saveRouteButton) saveRouteButton.style.display = "block";
+    if (backButton) backButton.style.display = "block";
+    if (routeNameInput) routeNameInput.parentElement.style.display = "flex";
     if (adminControlsEl) adminControlsEl.style.display = "none";
   }
 
@@ -89,11 +156,11 @@ async function init() {
     mapSelectEl.appendChild(opt);
   }
 
-  // Create Leaflet map and layers
+  // Create Leaflet map and layers (order matters: bottom to top)
   const leafletMap = createLeafletMap("map");
-  const markersLayer = L.layerGroup().addTo(leafletMap);
-  const routeLayer = L.layerGroup().addTo(leafletMap);
-  const fixedMarkersLayer = L.layerGroup().addTo(leafletMap);
+  const routeLayer = L.layerGroup().addTo(leafletMap); // Bottom layer
+  const markersLayer = L.layerGroup().addTo(leafletMap); // Middle layer
+  const fixedMarkersLayer = L.layerGroup().addTo(leafletMap); // Top layer
 
   // Initialize state with layers
   initState(markersLayer, routeLayer);
@@ -160,6 +227,14 @@ async function init() {
     currentMode.activePinType = pinType;
     currentMode.routeModeEnabled = routeMode;
     
+    // Toggle CSS class on map container for hover effects
+    const mapContainer = leafletMap.getContainer();
+    if (routeMode && !adminMode) {
+      mapContainer.classList.add('route-mode-active');
+    } else {
+      mapContainer.classList.remove('route-mode-active');
+    }
+    
     // Clear preview line when route mode is disabled
     if (!routeMode && routePreviewLine) {
       leafletMap.removeLayer(routePreviewLine);
@@ -173,6 +248,236 @@ async function init() {
       async () => encodeStateToUrl(getState()),
       () => mapSelectEl.value
     );
+
+    // Saved routes functionality
+    const showMainView = () => {
+      if (mainView) mainView.style.display = "block";
+      if (savedRoutesView) savedRoutesView.style.display = "none";
+      if (backButton) {
+        backButton.style.display = "block";
+        backButton.textContent = "← My Saved Routes";
+      }
+      if (savedRoutesTitle) savedRoutesTitle.style.display = "none";
+      if (mainFooter) mainFooter.style.display = "block";
+      if (savedRoutesFooter) savedRoutesFooter.style.display = "none";
+    };
+
+    const showSavedRoutesView = () => {
+      if (mainView) mainView.style.display = "none";
+      if (savedRoutesView) savedRoutesView.style.display = "block";
+      if (backButton) backButton.style.display = "none";
+      if (savedRoutesTitle) savedRoutesTitle.style.display = "block";
+      if (mainFooter) mainFooter.style.display = "none";
+      if (savedRoutesFooter) savedRoutesFooter.style.display = "block";
+      renderSavedRoutesList();
+    };
+
+    const renderSavedRoutesList = () => {
+      const routes = getSavedRoutes();
+      
+      if (routes.length === 0) {
+        savedRoutesList.innerHTML = "";
+        if (emptyRoutesMessage) emptyRoutesMessage.style.display = "block";
+        return;
+      }
+
+      if (emptyRoutesMessage) emptyRoutesMessage.style.display = "none";
+      
+      savedRoutesList.innerHTML = routes
+        .reverse()
+        .map((route) => {
+          const mapName = MAPS.find((m) => m.id === route.mapId)?.label || route.mapId;
+          const savedDate = new Date(route.savedAt);
+          const date = savedDate.toLocaleDateString();
+          const time = savedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          return `
+            <div class="saved-route-item" data-route-id="${route.id}">
+              <div class="saved-route-content">
+                <div class="saved-route-name">${route.name}</div>
+                <div class="saved-route-info">${mapName} · ${date} ${time}</div>
+              </div>
+              <button class="saved-route-share" data-route-id="${route.id}" data-map-id="${route.mapId}" data-state="${route.state}" title="Copy share link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                </svg>
+              </button>
+              <button class="saved-route-delete" data-route-id="${route.id}" title="Delete route">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  <line x1="10" y1="11" x2="10" y2="17"></line>
+                  <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+              </button>
+            </div>
+          `;
+        })
+        .join("");
+
+      // Add click handlers for route items
+      savedRoutesList.querySelectorAll(".saved-route-item").forEach((item) => {
+        item.addEventListener("click", (e) => {
+          // Don't load route if clicking action buttons
+          if (e.target.closest(".saved-route-delete") || e.target.closest(".saved-route-share")) return;
+          const routeId = item.dataset.routeId;
+          loadSavedRoute(routeId);
+        });
+      });
+
+      // Add click handlers for share buttons
+      savedRoutesList.querySelectorAll(".saved-route-share").forEach((btn) => {
+        btn.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          const mapId = btn.dataset.mapId;
+          const stateString = btn.dataset.state;
+          
+          // Construct share URL
+          const url = new URL(window.location.href);
+          url.searchParams.set("state", stateString);
+          url.searchParams.set("map", mapId);
+          const urlStr = url.toString();
+          
+          // Copy to clipboard
+          try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              await navigator.clipboard.writeText(urlStr);
+              
+              // Visual feedback
+              const originalHTML = btn.innerHTML;
+              btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+              btn.style.color = "#22c55e";
+              setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.style.color = "";
+              }, 2000);
+            } else {
+              prompt("Copy this URL:", urlStr);
+            }
+          } catch (err) {
+            console.error("Failed to copy URL:", err);
+          }
+        });
+      });
+
+      // Add click handlers for delete buttons
+      savedRoutesList.querySelectorAll(".saved-route-delete").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const routeId = btn.dataset.routeId;
+          showDeleteModal(routeId, renderSavedRoutesList);
+        });
+      });
+    };
+
+    const loadSavedRoute = async (routeId) => {
+      const route = getRoute(routeId);
+      if (!route) return;
+
+      // Switch to the correct map
+      const targetMap = MAPS.find((m) => m.id === route.mapId);
+      if (!targetMap) return;
+
+      mapSelectEl.value = route.mapId;
+
+      // Load the map
+      try {
+        await loadMap(leafletMap, targetMap, markersLayer, routeLayer);
+        await loadFixedMarkers(route.mapId);
+      } catch (err) {
+        console.error("Failed to load map:", err);
+        return;
+      }
+
+      // Decode and load the state
+      try {
+        const stateData = await decodeStateFromUrl();
+        // The state is stored directly in route.state, but we need to decode it
+        // Actually, we need to manually construct a URL with the state param
+        const fakeUrl = `?state=${route.state}`;
+        const params = new URLSearchParams(fakeUrl);
+        const encoded = params.get("state");
+        
+        if (encoded) {
+          const bytes = base64UrlDecodeToBytes(encoded);
+          let json;
+          
+          if (window.DecompressionStream) {
+            try {
+              const ds = new DecompressionStream("gzip");
+              const writer = ds.writable.getWriter();
+              writer.write(bytes);
+              writer.close();
+              const decompressed = await new Response(ds.readable).arrayBuffer();
+              json = new TextDecoder().decode(decompressed);
+            } catch (err) {
+              json = new TextDecoder().decode(bytes);
+            }
+          } else {
+            json = new TextDecoder().decode(bytes);
+          }
+
+          const stateArray = JSON.parse(json);
+          if (Array.isArray(stateArray)) {
+            setState(stateArray);
+            renderState(handleMarkerClick);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load route state:", err);
+      }
+
+      // Set route name and show main view
+      if (routeNameInput) routeNameInput.value = route.name;
+      showMainView();
+    };
+
+    // Back button toggles between views
+    if (backButton) {
+      backButton.addEventListener("click", () => {
+        if (mainView && mainView.style.display !== "none") {
+          showSavedRoutesView();
+        } else {
+          showMainView();
+        }
+      });
+    }
+
+    // Save route button
+    if (saveRouteButton) {
+      saveRouteButton.addEventListener("click", async () => {
+        const routeName = routeNameInput?.value || "Unnamed route";
+        const currentMapId = mapSelectEl.value;
+        const stateString = await encodeStateToUrl(getState());
+        
+        const savedRoute = saveRoute(routeName, currentMapId, stateString);
+        if (savedRoute) {
+          const originalText = saveRouteButton.textContent;
+          saveRouteButton.textContent = "✓ Saved!";
+          setTimeout(() => {
+            saveRouteButton.textContent = originalText;
+          }, 2000);
+        }
+      });
+    }
+
+    // New route button - create a clean slate
+    if (newRouteButton) {
+      newRouteButton.addEventListener("click", () => {
+        // Clear current state
+        clearState();
+        renderState(handleMarkerClick);
+        
+        // Reset route name
+        if (routeNameInput) routeNameInput.value = "Unnamed route";
+        
+        // Show main view
+        showMainView();
+      });
+    }
+
+    // Initially show saved routes view
+    showSavedRoutesView();
 
     // Setup legend buttons for visibility toggling
     legendButtons.forEach((btn) => {
@@ -233,6 +538,13 @@ async function init() {
 
   // Set up marker click handler for user markers
   const handleMarkerClick = (marker, e) => {
+    // Route mode: add route node at marker location
+    if (currentMode.routeModeEnabled && !adminMode) {
+      const latlng = marker.getLatLng();
+      addMarker(latlng, "route");
+      return;
+    }
+    
     // If in custom marker draw mode and clicked on a custom marker, remove it
     if (
       !adminMode &&
@@ -248,6 +560,18 @@ async function init() {
 
   // Store the handler globally so renderState can use it
   window._markerClickHandler = handleMarkerClick;
+  
+  // Set up click handler for fixed markers
+  const handleFixedMarkerClick = (marker, e) => {
+    // Route mode: add route node at marker location
+    if (currentMode.routeModeEnabled && !adminMode) {
+      const latlng = marker.getLatLng();
+      addMarker(latlng, "route");
+    }
+  };
+  
+  // Store globally for fixedMarkers.js
+  window._fixedMarkerClickHandler = handleFixedMarkerClick;
 
   // Track mouse movement for route preview
   leafletMap.on("mousemove", (e) => {

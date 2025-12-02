@@ -92,6 +92,34 @@ export function renderState(onMarkerClick = null) {
     }
   });
 
+  // Add hover effects to all regular markers after rendering
+  setTimeout(() => {
+    markersLayer.eachLayer((layer) => {
+      if (layer.markerType !== "route") {
+        const element = layer.getElement && layer.getElement();
+        if (element) {
+          // Set transform origin to center for proper scaling
+          element.style.transformOrigin = "center center";
+          
+          element.addEventListener("mouseenter", function() {
+            if (document.querySelector(".leaflet-container.route-mode-active")) {
+              const currentTransform = this.style.transform || "";
+              if (!currentTransform.includes("scale")) {
+                this.style.transform = currentTransform + " scale(1.1)";
+              }
+              this.style.zIndex = "1000";
+            }
+          });
+          element.addEventListener("mouseleave", function() {
+            const currentTransform = this.style.transform || "";
+            this.style.transform = currentTransform.replace(/\s*scale\([^)]*\)/g, "");
+            this.style.zIndex = "";
+          });
+        }
+      }
+    });
+  }, 0);
+
   return markersLayer;
 }
 
