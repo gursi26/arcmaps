@@ -58,102 +58,49 @@
               <select id="map-select"></select>
             </div>
             <div class="button-sections">
-            <div class="button-section" id="fixed-locations-section">
-              <h3 class="section-title">Fixed Locations</h3>
-              <div class="legend-controls">
-                <button type="button" class="legend-control-btn" id="show-all-btn">
-                  Show All
+            <div class="button-section collapsible-section" id="fixed-locations-section">
+              <div class="section-title-row">
+                <button class="section-collapse-toggle" data-section="fixed-locations">
+                  <svg class="collapse-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
                 </button>
-                <button type="button" class="legend-control-btn" id="hide-all-btn">
-                  Hide All
-                </button>
+                <h3 class="section-title">Fixed Locations</h3>
+                <div class="section-title-actions">
+                  <span class="text-link" id="show-all-btn">Show All</span>
+                  <span class="text-link" id="hide-all-btn">Hide All</span>
+                </div>
               </div>
-              <div class="legend-buttons">
-                <button
-                  type="button"
-                  class="legend-button legend-button-active"
-                  data-legend-type="spawn"
-                >
-                  <span class="pin-button-label">Player Spawn</span>
-                  <span class="pin-button-icon">
-                    <span class="pin-icon pin-icon-spawn">S</span>
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  class="legend-button legend-button-active"
-                  data-legend-type="metro-entrance"
-                >
-                  <span class="pin-button-label">Metro Entrance</span>
-                  <span class="pin-button-icon">
-                    <span class="pin-icon pin-icon-metro-entrance">M</span>
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  class="legend-button legend-button-active"
-                  data-legend-type="security-breach"
-                >
-                  <span class="pin-button-label">Security Breach</span>
-                  <span class="pin-button-icon">
-                    <span class="pin-icon pin-icon-security-breach">B</span>
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  class="legend-button legend-button-active"
-                  data-legend-type="weapon-case"
-                >
-                  <span class="pin-button-label">Weapon Case</span>
-                  <span class="pin-button-icon">
-                    <span class="pin-icon pin-icon-weapon-case">W</span>
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  class="legend-button legend-button-active"
-                  data-legend-type="metro"
-                >
-                  <span class="pin-button-label">Metro</span>
-                  <span class="pin-button-icon">
-                    <span class="pin-icon pin-icon-metro">T</span>
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  class="legend-button legend-button-active"
-                  data-legend-type="elevator"
-                >
-                  <span class="pin-button-label">Elevator</span>
-                  <span class="pin-button-icon">
-                    <span class="pin-icon pin-icon-elevator">↕</span>
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  class="legend-button legend-button-active"
-                  data-legend-type="raider-hatch"
-                >
-                  <span class="pin-button-label">Raider Hatch</span>
-                  <span class="pin-button-icon">
-                    <span class="pin-icon pin-icon-raider-hatch">R</span>
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  class="legend-button legend-button-active"
-                  data-legend-type="locked-room"
-                >
-                  <span class="pin-button-label">Locked Room</span>
-                  <span class="pin-button-icon">
-                    <span class="pin-icon pin-icon-locked-room">L</span>
-                  </span>
-                </button>
+              <div class="section-content" id="fixed-locations-content">
+                <div class="legend-buttons" id="legend-buttons-container">
+                  <!-- Dynamically populated from fixed-marker-types.json -->
+                </div>
               </div>
             </div>
 
-            <div class="button-section" id="draw-section">
-              <h3 class="section-title">Draw</h3>
+            <div class="button-section collapsible-section" id="draw-section">
+              <div class="section-title-row">
+                <button class="section-collapse-toggle" data-section="draw">
+                  <svg class="collapse-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </button>
+                <h3 class="section-title">Draw</h3>
+                <div class="section-title-actions">
+                  <span class="text-link" id="show-all-draw-btn">Show All</span>
+                  <span class="text-link" id="hide-all-draw-btn">Hide All</span>
+                </div>
+              </div>
+              <div class="section-content" id="draw-content">
+              <div class="draw-category-header">
+                <span class="draw-category-label">Markers</span>
+                <button class="draw-category-toggle" data-draw-category="markers" title="Toggle markers visibility">
+                  <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                </button>
+              </div>
               <div class="draw-buttons-row">
                 <button
                   type="button"
@@ -205,6 +152,16 @@
                   <span class="pin-button-icon">
                     <span class="marker-legend-custom marker-legend-custom-green"></span>
                   </span>
+                </button>
+              </div>
+              
+              <div class="draw-category-header">
+                <span class="draw-category-label">Routes</span>
+                <button class="draw-category-toggle" data-draw-category="routes" title="Toggle routes visibility">
+                  <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
                 </button>
               </div>
               <div class="draw-buttons-row">
@@ -261,92 +218,14 @@
                   </span>
                 </button>
               </div>
+              </div>
             </div>
 
             <!-- Admin mode buttons (hidden by default) -->
             <div class="button-section" id="admin-section">
               <h3 class="section-title">Admin: Fixed Markers</h3>
-              <div class="pin-buttons admin-pin-buttons">
-                <button
-                  type="button"
-                  class="pin-button"
-                  data-pin-type="spawn"
-                >
-                  <span class="pin-button-label">Player Spawn</span>
-                  <span class="pin-button-icon">
-                    <span class="pin-icon pin-icon-spawn">S</span>
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  class="pin-button"
-                  data-pin-type="metro-entrance"
-                >
-                  <span class="pin-button-label">Metro Entrance</span>
-                  <span class="pin-button-icon">
-                    <span class="pin-icon pin-icon-metro-entrance">M</span>
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  class="pin-button"
-                  data-pin-type="security-breach"
-                >
-                  <span class="pin-button-label">Security Breach</span>
-                  <span class="pin-button-icon">
-                    <span class="pin-icon pin-icon-security-breach">B</span>
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  class="pin-button"
-                  data-pin-type="weapon-case"
-                >
-                  <span class="pin-button-label">Weapon Case</span>
-                  <span class="pin-button-icon">
-                    <span class="pin-icon pin-icon-weapon-case">W</span>
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  class="pin-button"
-                  data-pin-type="metro"
-                >
-                  <span class="pin-button-label">Metro</span>
-                  <span class="pin-button-icon">
-                    <span class="pin-icon pin-icon-metro">T</span>
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  class="pin-button"
-                  data-pin-type="elevator"
-                >
-                  <span class="pin-button-label">Elevator</span>
-                  <span class="pin-button-icon">
-                    <span class="pin-icon pin-icon-elevator">↕</span>
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  class="pin-button"
-                  data-pin-type="raider-hatch"
-                >
-                  <span class="pin-button-label">Raider Hatch</span>
-                  <span class="pin-button-icon">
-                    <span class="pin-icon pin-icon-raider-hatch">R</span>
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  class="pin-button"
-                  data-pin-type="locked-room"
-                >
-                  <span class="pin-button-label">Locked Room</span>
-                  <span class="pin-button-icon">
-                    <span class="pin-icon pin-icon-locked-room">L</span>
-                  </span>
-                </button>
+              <div class="pin-buttons admin-pin-buttons" id="admin-pin-buttons-container">
+                <!-- Dynamically populated from fixed-marker-types.json -->
               </div>
             </div>
           </div>

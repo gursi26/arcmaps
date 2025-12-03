@@ -203,7 +203,7 @@ export function renderState(onMarkerClick = null) {
         marker.bindTooltip(note, {
           permanent: false,
           direction: 'top',
-          offset: [0, -40],
+          offset: [-16, -17],
           className: 'marker-note-tooltip'
         });
         

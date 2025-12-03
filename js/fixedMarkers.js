@@ -4,29 +4,16 @@ import { MARKER_TYPES, MARKER_TYPES_BY_ID, PIN_ICONS } from "./constants.js";
 let fixedState = [];
 let fixedMarkersLayer = null;
 
-// Visibility state for each fixed marker type
-const visibilityState = {
-  spawn: true,
-  "metro-entrance": true,
-  "security-breach": true,
-  "weapon-case": true,
-  metro: true,
-  elevator: true,
-  "raider-hatch": true,
-  "locked-room": true,
-};
+// Visibility state for each fixed marker type (dynamically populated)
+const visibilityState = {};
 
-// Fixed marker types (everything except custom and route)
-export const FIXED_MARKER_TYPES = [
-  "spawn",
-  "metro-entrance",
-  "security-breach",
-  "weapon-case",
-  "metro",
-  "elevator",
-  "raider-hatch",
-  "locked-room",
-];
+// Reserved marker type IDs that are user-drawn (not fixed markers)
+const RESERVED_MARKER_TYPES = ["custom", "route", "custom1", "custom2", "route1", "route2"];
+
+// Get list of all fixed marker types (excludes user-drawn types)
+function getFixedMarkerTypes() {
+  return Object.keys(MARKER_TYPES).filter(type => !RESERVED_MARKER_TYPES.includes(type));
+}
 
 // Initialize with Leaflet layer
 export function initFixedMarkers(layerGroup) {
@@ -35,22 +22,26 @@ export function initFixedMarkers(layerGroup) {
 
 // Toggle visibility for a marker type
 export function toggleMarkerTypeVisibility(markerType) {
-  if (visibilityState.hasOwnProperty(markerType)) {
-    visibilityState[markerType] = !visibilityState[markerType];
-    renderFixedMarkers();
-    return visibilityState[markerType];
+  // Initialize to true (visible) if not set yet
+  if (!visibilityState.hasOwnProperty(markerType)) {
+    visibilityState[markerType] = true;
   }
-  return true;
+  
+  // Toggle the visibility
+  visibilityState[markerType] = !visibilityState[markerType];
+  renderFixedMarkers();
+  return visibilityState[markerType];
 }
 
-// Get visibility state for a marker type
+// Get visibility state for a marker type (defaults to visible)
 export function isMarkerTypeVisible(markerType) {
-  return visibilityState[markerType] !== false;
+  return visibilityState[markerType] !== false; // undefined defaults to true
 }
 
 // Show all marker types
 export function showAllMarkerTypes() {
-  for (const markerType of FIXED_MARKER_TYPES) {
+  const allTypes = getFixedMarkerTypes();
+  for (const markerType of allTypes) {
     visibilityState[markerType] = true;
   }
   renderFixedMarkers();
@@ -58,7 +49,8 @@ export function showAllMarkerTypes() {
 
 // Hide all marker types
 export function hideAllMarkerTypes() {
-  for (const markerType of FIXED_MARKER_TYPES) {
+  const allTypes = getFixedMarkerTypes();
+  for (const markerType of allTypes) {
     visibilityState[markerType] = false;
   }
   renderFixedMarkers();
@@ -90,8 +82,8 @@ export function renderFixedMarkers() {
     const latlng = L.latLng(lat, lng);
     const markerType = MARKER_TYPES_BY_ID[typeId];
 
-    // Skip if this marker type is hidden
-    if (!visibilityState[markerType]) return;
+    // Skip if this marker type is explicitly hidden (default to visible)
+    if (visibilityState[markerType] === false) return;
 
     const icon = PIN_ICONS[markerType] || undefined;
     const markerOptions = icon ? { icon } : undefined;
@@ -138,7 +130,11 @@ export function renderFixedMarkers() {
 // Add fixed marker
 export function addFixedMarker(latlng, markerType) {
   const typeId = MARKER_TYPES[markerType];
-  if (typeId === undefined) return;
+  
+  if (typeId === undefined) {
+    console.error(`Failed to add fixed marker: type "${markerType}" not found in MARKER_TYPES`);
+    return;
+  }
   
   const lat = Math.round(latlng.lat * 100) / 100;
   const lng = Math.round(latlng.lng * 100) / 100;
@@ -215,8 +211,8 @@ export function downloadFixedMarkers(mapId) {
   URL.revokeObjectURL(url);
 }
 
-// Check if marker type is fixed
+// Check if marker type is fixed (not a user-drawn marker)
 export function isFixedMarkerType(markerType) {
-  return FIXED_MARKER_TYPES.includes(markerType);
+  return !RESERVED_MARKER_TYPES.includes(markerType) && MARKER_TYPES.hasOwnProperty(markerType);
 }
 

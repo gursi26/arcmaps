@@ -1,0 +1,83 @@
+{
+  "categories": [
+    {
+      "id": "loot",
+      "label": "Loot",
+      "markers": [
+        {
+          "id": 4,
+          "type": "security-breach",
+          "label": "Security Breach",
+          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>B</text></svg>"
+        },
+        {
+          "id": 5,
+          "type": "weapon-case",
+          "label": "Weapon Case",
+          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>W</text></svg>"
+        },
+        {
+          "id": 9,
+          "type": "locked-room",
+          "label": "Locked Room",
+          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>L</text></svg>"
+        }
+      ]
+    },
+    {
+      "id": "extracts",
+      "label": "Extracts",
+      "markers": [
+        {
+          "id": 2,
+          "type": "metro-entrance",
+          "label": "Metro Entrance",
+          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>M</text></svg>"
+        },
+        {
+          "id": 6,
+          "type": "metro",
+          "label": "Metro",
+          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>T</text></svg>"
+        },
+        {
+          "id": 7,
+          "type": "elevator",
+          "label": "Elevator",
+          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>↕</text></svg>"
+        },
+        {
+          "id": 8,
+          "type": "raider-hatch",
+          "label": "Raider Hatch",
+          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>R</text></svg>"
+        }
+      ]
+    },
+    {
+      "id": "other",
+      "label": "Other",
+      "markers": [
+        {
+          "id": 1,
+          "type": "spawn",
+          "label": "Player Spawn",
+          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>S</text></svg>"
+        },
+        {
+          "id": 14,
+          "type": "spawn-2",
+          "label": "Fake spawn",
+          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>X</text></svg>"
+        },
+        {
+          "id": 15,
+          "type": "spawn-3",
+          "label": "Fake marker",
+          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>Y</text></svg>"
+        }
+      ]
+    }
+  ]
+}
+

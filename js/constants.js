@@ -7,111 +7,85 @@ export const MAPS = [
   { id: "blue-gate", label: "Blue Gate", tilesPath: "assets/map-tiles/blue-gate/tiles" },
 ];
 
-// Marker type IDs - single source of truth
-export const MARKER_TYPES = {
+// Reserved IDs for user-drawn markers
+const RESERVED_CUSTOM_IDS = {
   custom: 0,
-  spawn: 1,
-  "metro-entrance": 2,
   route: 3,
-  "security-breach": 4,
-  "weapon-case": 5,
-  metro: 6,
-  elevator: 7,
-  "raider-hatch": 8,
-  "locked-room": 9,
   custom1: 10,
   custom2: 11,
   route1: 12,
   route2: 13,
 };
 
-export const MARKER_TYPES_BY_ID = [
-  "custom",
-  "spawn",
-  "metro-entrance",
-  "route",
-  "security-breach",
-  "weapon-case",
-  "metro",
-  "elevator",
-  "raider-hatch",
-  "locked-room",
-  "custom1",
-  "custom2",
-  "route1",
-  "route2",
-];
-
-// Leaflet icons for different marker types
-export const spawnIcon = L.divIcon({
-  className: "pin-icon pin-icon-spawn",
-  html: "S",
-  iconSize: [26, 26],
-  iconAnchor: [13, 26],
-});
-
-export const metroEntranceIcon = L.divIcon({
-  className: "pin-icon pin-icon-metro-entrance",
-  html: "M",
-  iconSize: [26, 26],
-  iconAnchor: [13, 26],
-});
-
-export const securityBreachIcon = L.divIcon({
-  className: "pin-icon pin-icon-security-breach",
-  html: "B",
-  iconSize: [26, 26],
-  iconAnchor: [13, 26],
-});
-
-export const weaponCaseIcon = L.divIcon({
-  className: "pin-icon pin-icon-weapon-case",
-  html: "W",
-  iconSize: [26, 26],
-  iconAnchor: [13, 26],
-});
-
-export const metroIcon = L.divIcon({
-  className: "pin-icon pin-icon-metro",
-  html: "T",
-  iconSize: [26, 26],
-  iconAnchor: [13, 26],
-});
-
-export const elevatorIcon = L.divIcon({
-  className: "pin-icon pin-icon-elevator",
-  html: "↕",
-  iconSize: [26, 26],
-  iconAnchor: [13, 26],
-});
-
-export const raiderHatchIcon = L.divIcon({
-  className: "pin-icon pin-icon-raider-hatch",
-  html: "R",
-  iconSize: [26, 26],
-  iconAnchor: [13, 26],
-});
-
-export const lockedRoomIcon = L.divIcon({
-  className: "pin-icon pin-icon-locked-room",
-  html: "L",
-  iconSize: [26, 26],
-  iconAnchor: [13, 26],
-});
-
-export const PIN_ICONS = {
+// Dynamic marker type data (populated on load)
+export let MARKER_TYPES = { ...RESERVED_CUSTOM_IDS };
+export let MARKER_TYPES_BY_ID = [];
+export let PIN_ICONS = {
   custom: null,
-  spawn: spawnIcon,
-  "metro-entrance": metroEntranceIcon,
-  "security-breach": securityBreachIcon,
-  "weapon-case": weaponCaseIcon,
-  metro: metroIcon,
-  elevator: elevatorIcon,
-  "raider-hatch": raiderHatchIcon,
-  "locked-room": lockedRoomIcon,
+  route: null,
   custom1: null,
   custom2: null,
   route1: null,
   route2: null,
 };
+export let MARKER_CATEGORIES = [];
+
+// Load marker types from JSON
+export async function loadMarkerTypes() {
+  try {
+    const response = await fetch("assets/fixed-markers/fixed-marker-types.json");
+    const data = await response.json();
+    
+    MARKER_CATEGORIES = data.categories;
+    
+    // Find the maximum ID in the JSON to size the array appropriately
+    let maxId = Math.max(...Object.values(RESERVED_CUSTOM_IDS));
+    for (const category of data.categories) {
+      for (const marker of category.markers) {
+        if (marker.id > maxId) maxId = marker.id;
+      }
+    }
+    
+    // Build MARKER_TYPES_BY_ID array
+    MARKER_TYPES_BY_ID = new Array(maxId + 1).fill(null);
+    
+    // Fill in reserved custom/route types
+    for (const [type, id] of Object.entries(RESERVED_CUSTOM_IDS)) {
+      MARKER_TYPES[type] = id;
+      MARKER_TYPES_BY_ID[id] = type;
+    }
+    
+    // Process fixed markers from JSON
+    for (const category of data.categories) {
+      for (const marker of category.markers) {
+        const { id, type, icon } = marker;
+        
+        // Check if ID is reserved
+        const reservedIds = Object.values(RESERVED_CUSTOM_IDS);
+        if (reservedIds.includes(id)) {
+          console.error(`ERROR: Marker type "${type}" uses reserved ID ${id}. Reserved IDs are: ${reservedIds.join(', ')}`);
+          console.error(`Please use a different ID that is not in this list: ${reservedIds.join(', ')}`);
+          continue; // Skip this marker
+        }
+        
+        // Map both type string and numeric ID
+        MARKER_TYPES[type] = id;
+        MARKER_TYPES_BY_ID[id] = type;
+        
+        // Create Leaflet divIcon with SVG
+        PIN_ICONS[type] = L.divIcon({
+          className: `pin-icon pin-icon-${type}`,
+          html: icon,
+          iconSize: [26, 26],
+          iconAnchor: [13, 26],
+        });
+      }
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Failed to load marker types:", error);
+    return false;
+  }
+}
 

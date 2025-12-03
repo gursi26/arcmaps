@@ -1,4 +1,4 @@
-import { MAPS, MARKER_TYPES_BY_ID } from "./constants.js";
+import { MAPS, MARKER_TYPES_BY_ID, loadMarkerTypes, MARKER_CATEGORIES, PIN_ICONS } from "./constants.js";
 import { decodeStateFromUrl, encodeStateToUrl, base64UrlDecodeToBytes } from "./urlState.js";
 import {
   initState,
@@ -33,6 +33,7 @@ import {
   addFixedMarker,
   isFixedMarkerType,
   toggleMarkerTypeVisibility,
+  isMarkerTypeVisible,
   showAllMarkerTypes,
   hideAllMarkerTypes,
 } from "./fixedMarkers.js";
@@ -63,7 +64,108 @@ function isAdminMode() {
 async function init() {
   if (!MAPS.length) return;
 
+  // Load marker types from JSON before anything else
+  await loadMarkerTypes();
+
+  // Populate legend buttons dynamically
+  const legendContainer = document.getElementById("legend-buttons-container");
+  if (legendContainer && MARKER_CATEGORIES) {
+    let legendHTML = '';
+    
+    for (const category of MARKER_CATEGORIES) {
+      // Add category header with visibility toggle
+      legendHTML += `
+        <div class="legend-category-header">
+          <span class="legend-category-label">${category.label}</span>
+          <button class="legend-category-toggle" data-category-id="${category.id}" title="Toggle category visibility">
+            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </button>
+        </div>
+      `;
+      
+      // Add marker buttons for this category
+      for (const marker of category.markers) {
+        const icon = PIN_ICONS[marker.type];
+        const iconHTML = icon ? icon.options.html : '';
+        
+        legendHTML += `
+          <button
+            type="button"
+            class="legend-button legend-button-active"
+            data-legend-type="${marker.type}"
+            data-category="${category.id}"
+          >
+            <span class="pin-button-label">${marker.label}</span>
+            <span class="pin-button-icon">
+              <span class="pin-icon pin-icon-${marker.type}">${iconHTML}</span>
+            </span>
+          </button>
+        `;
+      }
+    }
+    
+    legendContainer.innerHTML = legendHTML;
+  }
+
+  // Populate admin mode buttons dynamically
+  const adminPinButtonsContainer = document.getElementById("admin-pin-buttons-container");
+  if (adminPinButtonsContainer && MARKER_CATEGORIES) {
+    let adminHTML = '';
+    
+    for (const category of MARKER_CATEGORIES) {
+      for (const marker of category.markers) {
+        const icon = PIN_ICONS[marker.type];
+        const iconHTML = icon ? icon.options.html : '';
+        
+        adminHTML += `
+          <button
+            type="button"
+            class="pin-button"
+            data-pin-type="${marker.type}"
+          >
+            <span class="pin-button-label">${marker.label}</span>
+            <span class="pin-button-icon">
+              <span class="pin-icon pin-icon-${marker.type}">${iconHTML}</span>
+            </span>
+          </button>
+        `;
+      }
+    }
+    
+    adminPinButtonsContainer.innerHTML = adminHTML;
+  }
+
   const adminMode = isAdminMode();
+
+  // Setup section collapse/expand functionality
+  const sectionCollapseToggles = document.querySelectorAll(".section-collapse-toggle");
+  sectionCollapseToggles.forEach((toggle) => {
+    toggle.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const sectionId = toggle.dataset.section;
+      const contentId = `${sectionId}-content`;
+      const content = document.getElementById(contentId);
+      const section = document.getElementById(`${sectionId}-section`);
+      
+      if (!content) return;
+      
+      // Toggle collapsed state
+      const isCollapsed = content.classList.contains("collapsed");
+      
+      if (isCollapsed) {
+        content.classList.remove("collapsed");
+        toggle.classList.remove("collapsed");
+        if (section) section.classList.remove("section-collapsed");
+      } else {
+        content.classList.add("collapsed");
+        toggle.classList.add("collapsed");
+        if (section) section.classList.add("section-collapsed");
+      }
+    });
+  });
 
   // Get DOM elements
   const mapSelectEl = document.getElementById("map-select");
@@ -505,6 +607,159 @@ async function init() {
         renderState(handleMarkerClick);
       });
     });
+
+    // Setup Show All / Hide All for Draw section
+    const showAllDrawBtn = document.getElementById("show-all-draw-btn");
+    const hideAllDrawBtn = document.getElementById("hide-all-draw-btn");
+    
+    const allDrawMarkerTypes = ["custom", "custom1", "custom2", "route", "route1", "route2"];
+    
+    if (showAllDrawBtn) {
+      showAllDrawBtn.addEventListener("click", () => {
+        allDrawMarkerTypes.forEach((type) => {
+          const currentState = isMarkerVisible(type);
+          if (!currentState) {
+            toggleMarkerVisibility(type);
+          }
+        });
+        
+        // Update all toggle icons
+        visibilityToggles.forEach((toggle) => {
+          toggle.classList.remove("hidden");
+          toggle.innerHTML = `
+            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          `;
+        });
+        
+        // Update category toggles
+        document.querySelectorAll(".draw-category-toggle").forEach((toggle) => {
+          toggle.classList.remove("category-hidden");
+          toggle.innerHTML = `
+            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          `;
+        });
+        
+        renderState(handleMarkerClick);
+      });
+    }
+    
+    if (hideAllDrawBtn) {
+      hideAllDrawBtn.addEventListener("click", () => {
+        allDrawMarkerTypes.forEach((type) => {
+          const currentState = isMarkerVisible(type);
+          if (currentState) {
+            toggleMarkerVisibility(type);
+          }
+        });
+        
+        // Update all toggle icons
+        visibilityToggles.forEach((toggle) => {
+          toggle.classList.add("hidden");
+          toggle.innerHTML = `
+            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+              <line x1="1" y1="1" x2="23" y2="23"></line>
+            </svg>
+          `;
+        });
+        
+        // Update category toggles
+        document.querySelectorAll(".draw-category-toggle").forEach((toggle) => {
+          toggle.classList.add("category-hidden");
+          toggle.innerHTML = `
+            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+              <line x1="1" y1="1" x2="23" y2="23"></line>
+            </svg>
+          `;
+        });
+        
+        renderState(handleMarkerClick);
+      });
+    }
+
+    // Setup category toggles for Draw section
+    const drawCategoryToggles = document.querySelectorAll(".draw-category-toggle");
+    drawCategoryToggles.forEach((toggle) => {
+      toggle.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const category = toggle.dataset.drawCategory;
+        if (!category) return;
+
+        // Define marker types for each category
+        const categoryTypes = {
+          markers: ["custom", "custom1", "custom2"],
+          routes: ["route", "route1", "route2"],
+        };
+
+        const types = categoryTypes[category];
+        if (!types) return;
+
+        // Check if all are currently visible
+        const allVisible = types.every((type) => isMarkerVisible(type));
+
+        // Toggle all markers in this category
+        types.forEach((type) => {
+          const currentState = isMarkerVisible(type);
+          if (currentState !== !allVisible) {
+            toggleMarkerVisibility(type);
+          }
+        });
+
+        // Update individual toggle icons for this category
+        types.forEach((type) => {
+          const individualToggles = document.querySelectorAll(
+            `.button-visibility-toggle[data-marker-type="${type}"]`
+          );
+          individualToggles.forEach((indToggle) => {
+            if (allVisible) {
+              indToggle.classList.add("hidden");
+              indToggle.innerHTML = `
+                <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              `;
+            } else {
+              indToggle.classList.remove("hidden");
+              indToggle.innerHTML = `
+                <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              `;
+            }
+          });
+        });
+
+        // Update category toggle icon
+        if (allVisible) {
+          toggle.classList.add("category-hidden");
+          toggle.innerHTML = `
+            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+              <line x1="1" y1="1" x2="23" y2="23"></line>
+            </svg>
+          `;
+        } else {
+          toggle.classList.remove("category-hidden");
+          toggle.innerHTML = `
+            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          `;
+        }
+
+        renderState(handleMarkerClick);
+      });
+    });
   }
   
   // Saved routes functionality (define outside if block for accessibility)
@@ -819,6 +1074,16 @@ async function init() {
         legendButtons.forEach((btn) => {
           btn.classList.add("legend-button-active");
         });
+        // Update all category toggle icons to visible state
+        document.querySelectorAll(".legend-category-toggle").forEach((toggle) => {
+          toggle.classList.remove("category-hidden");
+          toggle.innerHTML = `
+            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          `;
+        });
       });
     }
 
@@ -829,8 +1094,81 @@ async function init() {
         legendButtons.forEach((btn) => {
           btn.classList.remove("legend-button-active");
         });
+        // Update all category toggle icons to hidden state
+        document.querySelectorAll(".legend-category-toggle").forEach((toggle) => {
+          toggle.classList.add("category-hidden");
+          toggle.innerHTML = `
+            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+              <line x1="1" y1="1" x2="23" y2="23"></line>
+            </svg>
+          `;
+        });
       });
     }
+
+    // Setup category visibility toggles
+    const categoryToggles = document.querySelectorAll(".legend-category-toggle");
+    categoryToggles.forEach((toggle) => {
+      toggle.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const categoryId = toggle.dataset.categoryId;
+        if (!categoryId) return;
+
+        // Find all buttons in this category
+        const categoryButtons = Array.from(legendButtons).filter(
+          (btn) => btn.dataset.category === categoryId
+        );
+
+        // Check if all are currently visible
+        const allVisible = categoryButtons.every((btn) =>
+          btn.classList.contains("legend-button-active")
+        );
+
+        // Toggle all markers in this category
+        categoryButtons.forEach((btn) => {
+          const legendType = btn.dataset.legendType;
+          if (!legendType) return;
+
+          const shouldBeVisible = !allVisible;
+          
+          // Set visibility state
+          toggleMarkerTypeVisibility(legendType);
+          const currentState = isMarkerTypeVisible(legendType);
+          
+          // If current state doesn't match desired state, toggle again
+          if (currentState !== shouldBeVisible) {
+            toggleMarkerTypeVisibility(legendType);
+          }
+
+          // Update button style
+          if (shouldBeVisible) {
+            btn.classList.add("legend-button-active");
+          } else {
+            btn.classList.remove("legend-button-active");
+          }
+        });
+
+        // Update toggle icon style
+        if (allVisible) {
+          toggle.classList.add("category-hidden");
+          toggle.innerHTML = `
+            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+              <line x1="1" y1="1" x2="23" y2="23"></line>
+            </svg>
+          `;
+        } else {
+          toggle.classList.remove("category-hidden");
+          toggle.innerHTML = `
+            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          `;
+        }
+      });
+    });
   } else {
     setupAdminControls(adminControlsEl, () => mapSelectEl.value);
   }
