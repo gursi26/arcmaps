@@ -175,21 +175,24 @@ export function renderState(onMarkerClick = null) {
       let icon = PIN_ICONS[markerType];
       
       // Create custom colored icons for custom marker variants
-      if (markerType === "custom1") {
-        icon = L.divIcon({
-          className: "custom-marker-icon",
-          html: '<svg xmlns="http://www.w3.org/2000/svg" width="25" height="41" viewBox="0 0 25 41"><path fill="#dc2626" stroke="#ffffff" stroke-width="1" d="M12.5 0C5.596 0 0 5.596 0 12.5c0 9.375 12.5 28.125 12.5 28.125S25 21.875 25 12.5C25 5.596 19.404 0 12.5 0z"/><circle cx="12.5" cy="12.5" r="4" fill="#ffffff"/></svg>',
+      // Use Leaflet's Icon class with custom colors to match the default marker behavior
+      if (markerType === "custom") {
+        icon = new L.Icon({
+          iconUrl: 'data:image/svg+xml;base64,' + btoa('<svg xmlns="http://www.w3.org/2000/svg" width="25" height="41" viewBox="0 0 25 41"><path fill="#3b82f6" stroke="#ffffff" stroke-width="1" d="M12.5 0C5.596 0 0 5.596 0 12.5c0 9.375 12.5 28.125 12.5 28.125S25 21.875 25 12.5C25 5.596 19.404 0 12.5 0z"/><circle cx="12.5" cy="12.5" r="4" fill="#ffffff"/></svg>'),
           iconSize: [25, 41],
           iconAnchor: [12, 41],
-          popupAnchor: [1, -34],
+        });
+      } else if (markerType === "custom1") {
+        icon = new L.Icon({
+          iconUrl: 'data:image/svg+xml;base64,' + btoa('<svg xmlns="http://www.w3.org/2000/svg" width="25" height="41" viewBox="0 0 25 41"><path fill="#dc2626" stroke="#ffffff" stroke-width="1" d="M12.5 0C5.596 0 0 5.596 0 12.5c0 9.375 12.5 28.125 12.5 28.125S25 21.875 25 12.5C25 5.596 19.404 0 12.5 0z"/><circle cx="12.5" cy="12.5" r="4" fill="#ffffff"/></svg>'),
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
         });
       } else if (markerType === "custom2") {
-        icon = L.divIcon({
-          className: "custom-marker-icon",
-          html: '<svg xmlns="http://www.w3.org/2000/svg" width="25" height="41" viewBox="0 0 25 41"><path fill="#16a34a" stroke="#ffffff" stroke-width="1" d="M12.5 0C5.596 0 0 5.596 0 12.5c0 9.375 12.5 28.125 12.5 28.125S25 21.875 25 12.5C25 5.596 19.404 0 12.5 0z"/><circle cx="12.5" cy="12.5" r="4" fill="#ffffff"/></svg>',
+        icon = new L.Icon({
+          iconUrl: 'data:image/svg+xml;base64,' + btoa('<svg xmlns="http://www.w3.org/2000/svg" width="25" height="41" viewBox="0 0 25 41"><path fill="#16a34a" stroke="#ffffff" stroke-width="1" d="M12.5 0C5.596 0 0 5.596 0 12.5c0 9.375 12.5 28.125 12.5 28.125S25 21.875 25 12.5C25 5.596 19.404 0 12.5 0z"/><circle cx="12.5" cy="12.5" r="4" fill="#ffffff"/></svg>'),
           iconSize: [25, 41],
           iconAnchor: [12, 41],
-          popupAnchor: [1, -34],
         });
       }
       
@@ -203,7 +206,7 @@ export function renderState(onMarkerClick = null) {
         marker.bindTooltip(note, {
           permanent: false,
           direction: 'top',
-          offset: [-16, -17],
+          offset: [0, -40],
           className: 'marker-note-tooltip'
         });
         
