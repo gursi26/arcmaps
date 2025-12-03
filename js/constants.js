@@ -1,10 +1,10 @@
 // Configuration of available maps
 export const MAPS = [
-  { id: "stella-montis", label: "Stella Montis", tilesPath: "map-tiles/stella-montis/tiles" },
-  { id: "spaceport", label: "Spaceport", tilesPath: "map-tiles/spaceport/tiles" },
-  { id: "dam-battlegrounds", label: "Dam Battlegrounds", tilesPath: "map-tiles/dam-battlegrounds/tiles" },
-  { id: "buried-city", label: "Buried City", tilesPath: "map-tiles/buried-city/tiles" },
-  { id: "blue-gate", label: "Blue Gate", tilesPath: "map-tiles/blue-gate/tiles" },
+  { id: "stella-montis", label: "Stella Montis", tilesPath: "assets/map-tiles/stella-montis/tiles" },
+  { id: "spaceport", label: "Spaceport", tilesPath: "assets/map-tiles/spaceport/tiles" },
+  { id: "dam-battlegrounds", label: "Dam Battlegrounds", tilesPath: "assets/map-tiles/dam-battlegrounds/tiles" },
+  { id: "buried-city", label: "Buried City", tilesPath: "assets/map-tiles/buried-city/tiles" },
+  { id: "blue-gate", label: "Blue Gate", tilesPath: "assets/map-tiles/blue-gate/tiles" },
 ];
 
 // Marker type IDs - single source of truth

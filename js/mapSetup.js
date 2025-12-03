@@ -85,8 +85,7 @@ export function loadMap(leafletMap, mapEntry, markersLayer, routeLayer) {
       // At zoom 3: 8×8 tiles = 4096×4096 pixels total
       const tileSize = 512;
       const minNativeZoom = 1;
-      const tilesAtMinZoom = Math.pow(1, minNativeZoom); // 2
-      const mapSize = tilesAtMinZoom * tileSize; // 1024
+      const mapSize = tileSize; // 1024
       
       // Set bounds for Simple CRS
       // For Leaflet Simple CRS, Y axis goes downward from top

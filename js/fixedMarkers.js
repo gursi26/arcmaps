@@ -158,7 +158,7 @@ export function undoLastFixedMarker() {
 // Load fixed markers from JSON file
 export async function loadFixedMarkers(mapId) {
   try {
-    const response = await fetch(`fixed-markers/${mapId}.json`);
+    const response = await fetch(`assets/fixed-markers/${mapId}.json`);
     if (!response.ok) {
       console.warn(`No fixed markers file found for ${mapId}`);
       fixedState = [];
