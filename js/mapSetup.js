@@ -1,13 +1,13 @@
 import { clearState } from "./state.js";
 
-let currentOverlay = null;
+let currentTileLayer = null;
 let currentBounds = null;
 
 // Initialize Leaflet map with Simple CRS
 export function createLeafletMap(containerId) {
   const leafletMap = L.map(containerId, {
     crs: L.CRS.Simple,
-    minZoom: -4,
+    minZoom: 0,
     maxZoom: 4,
     zoomSnap: 0.25,
     zoomDelta: 0.5,
@@ -66,40 +66,61 @@ export function addZoomControl(leafletMap) {
   leafletMap.addControl(new FitZoomControl());
 }
 
-// Load a map image onto the Leaflet map
+// Load a map using tile layers
 export function loadMap(leafletMap, mapEntry, markersLayer, routeLayer) {
   return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      const w = img.naturalWidth || img.width;
-      const h = img.naturalHeight || img.height;
-      const imageBounds = [
-        [0, 0],
-        [h, w],
-      ];
-      const bounds = L.latLngBounds(imageBounds);
-      const paddedBounds = bounds.pad(0.5);
-
-      if (currentOverlay) {
-        leafletMap.removeLayer(currentOverlay);
+    try {
+      // Remove existing tile layer if present
+      if (currentTileLayer) {
+        leafletMap.removeLayer(currentTileLayer);
       }
 
       // Clear layers when switching maps (but keep state)
       markersLayer.clearLayers();
       routeLayer.clearLayers();
 
-      currentOverlay = L.imageOverlay(mapEntry.file, imageBounds).addTo(
-        leafletMap
-      );
+      // Tiles are 512×512 pixels each
+      // At zoom 1: 2×2 tiles = 1024×1024 pixels total
+      // At zoom 2: 4×4 tiles = 2048×2048 pixels total
+      // At zoom 3: 8×8 tiles = 4096×4096 pixels total
+      const tileSize = 512;
+      const minNativeZoom = 1;
+      const tilesAtMinZoom = Math.pow(1, minNativeZoom); // 2
+      const mapSize = tilesAtMinZoom * tileSize; // 1024
+      
+      // Set bounds for Simple CRS
+      // For Leaflet Simple CRS, Y axis goes downward from top
+      // Format: [[minY, minX], [maxY, maxX]] or [[top, left], [bottom, right]]
+      const imageBounds = [
+        [-mapSize, 0],      // Top-left corner  
+        [0, mapSize],       // Bottom-right corner
+      ];
+      const bounds = L.latLngBounds(imageBounds);
+      const paddedBounds = bounds.pad(0.5);
+
+      // Create tile layer
+      currentTileLayer = L.tileLayer(`${mapEntry.tilesPath}/{z}/{x}/{y}.webp`, {
+        minZoom: 0,
+        maxZoom: 4,
+        minNativeZoom: 1,
+        maxNativeZoom: 3,
+        tileSize: tileSize,
+        noWrap: true,
+        tms: false, // Standard XYZ tile system (Y=0 at top)
+        errorTileUrl: '',
+      }).addTo(leafletMap);
+
       currentBounds = bounds;
       leafletMap.setMaxBounds(paddedBounds);
       leafletMap.options.maxBoundsViscosity = 0.85;
+      
+      // Fit the map to show all bounds in viewport
       leafletMap.fitBounds(bounds);
 
       resolve();
-    };
-    img.onerror = reject;
-    img.src = mapEntry.file;
+    } catch (err) {
+      reject(err);
+    }
   });
 }
 
