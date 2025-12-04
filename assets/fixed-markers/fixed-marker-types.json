@@ -5,79 +5,162 @@
       "label": "Loot",
       "markers": [
         {
-          "id": 4,
-          "type": "security-breach",
-          "label": "Security Breach",
-          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>B</text></svg>"
-        },
-        {
-          "id": 5,
-          "type": "weapon-case",
-          "label": "Weapon Case",
-          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>W</text></svg>"
-        },
-        {
-          "id": 9,
-          "type": "locked-room",
-          "label": "Locked Room",
-          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>L</text></svg>"
-        }
-      ]
-    },
-    {
-      "id": "extracts",
-      "label": "Extracts",
-      "markers": [
-        {
-          "id": 2,
-          "type": "metro-entrance",
-          "label": "Metro Entrance",
-          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>M</text></svg>"
-        },
-        {
-          "id": 6,
-          "type": "metro",
-          "label": "Metro",
-          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>T</text></svg>"
-        },
-        {
-          "id": 7,
-          "type": "elevator",
-          "label": "Elevator",
-          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>↕</text></svg>"
-        },
-        {
-          "id": 8,
-          "type": "raider-hatch",
-          "label": "Raider Hatch",
-          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>R</text></svg>"
-        }
-      ]
-    },
-    {
-      "id": "other",
-      "label": "Other",
-      "markers": [
-        {
-          "id": 1,
-          "type": "spawn",
-          "label": "Player Spawn",
+          "id": 13838,
+          "type": "security-locker",
+          "label": "Security Locker",
           "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>S</text></svg>"
         },
         {
-          "id": 14,
-          "type": "spawn-2",
-          "label": "Fake spawn",
-          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>X</text></svg>"
+          "id": 13821,
+          "type": "weapon-crate",
+          "label": "Weapon Crate",
+          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>W</text></svg>"
         },
         {
-          "id": 15,
-          "type": "spawn-3",
-          "label": "Fake marker",
-          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>Y</text></svg>"
+          "id": 13945,
+          "type": "field-crate",
+          "label": "Field Crate",
+          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>F</text></svg>"
+        },
+        {
+          "id": 13822,
+          "type": "grenade-tube",
+          "label": "Grenade Tube",
+          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>G</text></svg>"
+        },
+        {
+          "id": 13825,
+          "type": "medical-box",
+          "label": "Medical Box",
+          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>M</text></svg>"
+        },
+        {
+          "id": 13823,
+          "type": "ammo-box",
+          "label": "Ammo Box",
+          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>A</text></svg>"
+        }
+      ]
+    },
+    {
+      "id": "locations",
+      "label": "Locations",
+      "markers": [
+        {
+          "id": 13836,
+          "type": "metro-station",
+          "label": "Metro Station",
+          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>M</text></svg>"
+        },
+        {
+          "id": 13942,
+          "type": "metro-entrance",
+          "label": "Metro Entrance",
+          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>E</text></svg>"
+        },
+        {
+          "id": 13938,
+          "type": "airshaft",
+          "label": "Airshaft",
+          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>A</text></svg>"
+        },
+        {
+          "id": 13833,
+          "type": "cargo-elevator",
+          "label": "Cargo Elevator",
+          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>C</text></svg>"
+        },
+        {
+          "id": 13832,
+          "type": "raider-hatch",
+          "label": "Raider Hatch",
+          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>R</text></svg>"
+        },
+        {
+          "id": 13842,
+          "type": "locked-room",
+          "label": "Locked Room",
+          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>L</text></svg>"
+        },
+        {
+          "id": 13930,
+          "type": "player-spawn",
+          "label": "Player Spawn",
+          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>P</text></svg>"
+        },
+        {
+          "id": 13834,
+          "type": "field-depot",
+          "label": "Field Depot",
+          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>F</text></svg>"
+        },
+        {
+          "id": 13835,
+          "type": "supply-call-station",
+          "label": "Supply Call Station",
+          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>S</text></svg>"
+        }
+      ]
+    },
+    {
+      "id": "natural-resources",
+      "label": "Natural Resources",
+      "markers": [
+        {
+          "id": 13932,
+          "type": "agave",
+          "label": "Agave",
+          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>A</text></svg>"
+        },
+        {
+          "id": 13934,
+          "type": "apricot",
+          "label": "Apricot",
+          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>A</text></svg>"
+        },
+        {
+          "id": 13839,
+          "type": "fruit-basket",
+          "label": "Fruit Basket",
+          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>F</text></svg>"
+        },
+        {
+          "id": 13933,
+          "type": "great-mullein",
+          "label": "Great Mullein",
+          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>G</text></svg>"
+        },
+        {
+          "id": 13812,
+          "type": "lemons",
+          "label": "Lemons",
+          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>L</text></svg>"
+        },
+        {
+          "id": 14023,
+          "type": "moss",
+          "label": "Moss",
+          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>M</text></svg>"
+        },
+        {
+          "id": 13935,
+          "type": "mushroom",
+          "label": "Mushroom",
+          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>M</text></svg>"
+        },
+        {
+          "id": 13943,
+          "type": "olives",
+          "label": "Olives",
+          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>O</text></svg>"
+        },
+        {
+          "id": 13931,
+          "type": "prickly-pear",
+          "label": "Prickly Pear",
+          "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text x='12' y='18' text-anchor='middle' font-size='16' font-weight='bold' fill='currentColor'>P</text></svg>"
         }
       ]
     }
   ]
 }
-
